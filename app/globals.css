@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Battlesbridge';
+  src: url('/fonts/BattlesbridgeDemoRegular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html, body {
+    @apply bg-cellar-bg text-cellar-cream;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0C1519; }
+  ::-webkit-scrollbar-thumb { background: #2A3A42; border-radius: 2px; }
+}
+
+@layer components {
+  .page {
+    @apply min-h-screen bg-cellar-bg pb-24 pt-4 px-4 max-w-lg mx-auto;
+  }
+  .card {
+    @apply bg-cellar-card border border-cellar-border rounded-2xl;
+  }
+  .btn-primary {
+    @apply bg-cellar-amber text-cellar-bg font-semibold rounded-xl px-5 py-3
+           active:scale-95 transition-transform text-sm text-center block;
+  }
+  .btn-ghost {
+    @apply border border-cellar-border text-cellar-cream font-medium rounded-xl px-5 py-3
+           active:scale-95 transition-transform text-sm text-center block;
+  }
+  .input {
+    @apply bg-cellar-surface border border-cellar-border rounded-xl px-4 py-3
+           text-cellar-cream placeholder-cellar-muted outline-none
+           focus:border-cellar-amber transition-colors text-sm w-full;
+  }
+  .section-title {
+    @apply font-serif text-cellar-cream text-xl font-semibold;
+  }
+}
