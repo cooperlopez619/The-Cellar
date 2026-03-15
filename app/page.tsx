@@ -7,12 +7,15 @@ import { getSupabase } from '../lib/supabase'
 import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import BottomNav from '../components/ui/BottomNav'
+import type { Whiskey } from '../lib/database.types'
+
+type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
 export default function CatalogPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [whiskeys, setWhiskeys] = useState([])
-  const [stats, setStats]       = useState({})
+  const [whiskeys, setWhiskeys] = useState<Whiskey[]>([])
+  const [stats, setStats]       = useState<Stats>({})
   const [search, setSearch]     = useState('')
   const [typeFilter, setType]   = useState('')
   const [tierFilter, setTier]   = useState('')
@@ -33,17 +36,17 @@ export default function CatalogPage() {
         const { data: pours } = await supabase
           .from('pours').select('whiskey_id, master_score, bfb_score')
           .in('whiskey_id', data.map(w => w.id))
-        const map = {}
+        const map: Record<string, { s: number[]; b: number[] }> = {}
         for (const p of pours ?? []) {
           if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
           if (p.master_score) map[p.whiskey_id].s.push(p.master_score)
           if (p.bfb_score)   map[p.whiskey_id].b.push(p.bfb_score)
         }
-        const out = {}
+        const out: Stats = {}
         for (const [id, { s, b }] of Object.entries(map)) {
           out[id] = {
-            avgScore: s.length ? +(s.reduce((a,v)=>a+v,0)/s.length).toFixed(2) : 0,
-            avgBFB:   b.length ? +(b.reduce((a,v)=>a+v,0)/b.length).toFixed(2) : 0,
+            avgScore: s.length ? +(s.reduce((a, v) => a + v, 0) / s.length).toFixed(2) : 0,
+            avgBFB:   b.length ? +(b.reduce((a, v) => a + v, 0) / b.length).toFixed(2) : 0,
           }
         }
         setStats(out)

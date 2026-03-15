@@ -26,13 +26,28 @@ export interface Pour {
   whiskeys?:            Whiskey
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+type EmptyRecord = {}
+
 export type Database = {
   public: {
     Tables: {
-      whiskeys: { Row: Whiskey; Insert: Omit<Whiskey, 'id' | 'created_at'>; Update: Partial<Whiskey> }
-      pours:    { Row: Pour;    Insert: Omit<Pour, 'id' | 'created_at' | 'whiskeys'>; Update: Partial<Pour> }
+      whiskeys: {
+        Row:           Whiskey
+        Insert:        Omit<Whiskey, 'id' | 'created_at'>
+        Update:        Partial<Whiskey>
+        Relationships: []
+      }
+      pours: {
+        Row:           Pour
+        Insert:        Omit<Pour, 'id' | 'created_at' | 'whiskeys'>
+        Update:        Partial<Pour>
+        Relationships: []
+      }
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
+    Views:          EmptyRecord
+    Functions:      EmptyRecord
+    Enums:          EmptyRecord
+    CompositeTypes: EmptyRecord
   }
 }
