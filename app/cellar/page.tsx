@@ -12,6 +12,15 @@ import { ALL_SUBSCORES, WHISKEY_TYPES } from '../../lib/scoring'
 import type { Pour } from '../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
+function PencilIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+    </svg>
+  )
+}
+
 export default function MyCellarPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -94,7 +103,13 @@ export default function MyCellarPage() {
 
             return (
               <div key={pour.id} className="card overflow-hidden">
-                <button onClick={() => setExpanded(isOpen ? null : pour.id)} className="w-full text-left p-4">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setExpanded(isOpen ? null : pour.id)}
+                  onKeyDown={e => e.key === 'Enter' && setExpanded(isOpen ? null : pour.id)}
+                  className="w-full text-left p-4 cursor-pointer"
+                >
                   <div className="flex items-start gap-3">
                     <div className="shrink-0 pt-1"><ScoreRing score={pour.master_score ?? 0} size={52} strokeWidth={4} /></div>
                     <div className="flex-1 min-w-0">
@@ -105,12 +120,22 @@ export default function MyCellarPage() {
                         {(pour.bfb_score ?? 0) > 0 && <BFBBadge score={pour.bfb_score!} />}
                       </div>
                     </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                      className={`text-cellar-muted shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                      <path d="m6 9 6 6 6-6"/>
-                    </svg>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); router.push(`/edit/${pour.id}`) }}
+                        className="p-1.5 rounded-lg text-cellar-muted hover:text-cellar-amber hover:bg-cellar-surface transition-colors"
+                        aria-label="Edit pour"
+                      >
+                        <PencilIcon />
+                      </button>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                        className={`text-cellar-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                        <path d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </div>
                   </div>
-                </button>
+                </div>
 
                 {isOpen && (
                   <div className="border-t border-cellar-border px-4 py-4 space-y-3">
