@@ -109,6 +109,7 @@ function LogPourPage() {
   const [photoPreview, setPhotoPreview]       = useState<string | null>(null)
   const [saving, setSaving]                   = useState(false)
   const [error, setError]                     = useState('')
+  const [scoreError, setScoreError]           = useState(false)
   const [isFavorite, setIsFavorite]           = useState(false)
   const [isWishlist, setIsWishlist]           = useState(false)
   const fileInputRef                          = useRef<HTMLInputElement>(null)
@@ -161,6 +162,8 @@ function LogPourPage() {
 
   function handleScore(key: string, val: number) {
     setScores(prev => ({ ...prev, [key]: val }))
+    if (scoreError) setScoreError(false)
+    if (error) setError('')
   }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -184,6 +187,16 @@ function LogPourPage() {
     e.preventDefault()
     if (!selectedWhiskey) { setError('Select a whiskey first'); return }
     if (!priceTier)        { setError('Select a price tier'); return }
+
+    const scoreKeys: (keyof Scores)[] = ['nose', 'palate', 'finish', 'bottle', 'label']
+    const missingScores = scoreKeys.some(k => !scores[k] || scores[k] === 0)
+    if (missingScores) {
+      setScoreError(true)
+      setError('Please rate all 5 categories before saving')
+      document.querySelector('[data-scores-section]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    setScoreError(false)
     setSaving(true); setError('')
 
     let bottlePhotoUrl: string | null = null
@@ -292,7 +305,10 @@ function LogPourPage() {
 
         {/* Scores */}
         {selectedWhiskey && (
-          <div className="card p-5 space-y-5">
+          <div
+            data-scores-section
+            className={`card p-5 space-y-5 transition-colors ${scoreError ? 'border-red-500/70' : ''}`}
+          >
             <div className="flex items-center justify-between">
               <h2 className="section-title">Your Scores</h2>
               <div className="flex items-center gap-3">
