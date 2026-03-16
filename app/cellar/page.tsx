@@ -8,7 +8,7 @@ import SubScoreBar from '../../components/ui/SubScoreBar'
 import TagPill from '../../components/ui/TagPill'
 import BFBBadge from '../../components/ui/BFBBadge'
 import BottomNav from '../../components/ui/BottomNav'
-import { UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, WHISKEY_TYPES, type WhiskeyType } from '../../lib/scoring'
+import { ALL_SUBSCORES, WHISKEY_TYPES } from '../../lib/scoring'
 import type { Pour } from '../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -90,8 +90,7 @@ export default function MyCellarPage() {
           {filtered.map(pour => {
             const w = pour.whiskeys as any
             const isOpen = expanded === pour.id
-            const typeScoreDefs = w ? (TYPE_SUBSCORES[w.type as WhiskeyType] ?? []) : []
-            const allSubs = [...UNIVERSAL_SUBSCORES, ...typeScoreDefs]
+            const allSubs = ALL_SUBSCORES
 
             return (
               <div key={pour.id} className="card overflow-hidden">
@@ -115,10 +114,9 @@ export default function MyCellarPage() {
 
                 {isOpen && (
                   <div className="border-t border-cellar-border px-4 py-4 space-y-3">
-                    {allSubs.map((s, i) => {
-                      const key = i < 3 ? s.key : `type_score_${i - 2}`
-                      return <SubScoreBar key={s.key} label={s.label} score={(pour.scores as Record<string,number>)?.[key] ?? 0} />
-                    })}
+                    {allSubs.map(s => (
+                      <SubScoreBar key={s.key} label={s.label} score={(pour.scores as Record<string, number>)?.[s.key] ?? 0} />
+                    ))}
                     {pour.tasting_notes && (
                       <div className="border-t border-cellar-border pt-3">
                         <p className="text-cellar-muted text-xs uppercase tracking-wide mb-1">Notes</p>

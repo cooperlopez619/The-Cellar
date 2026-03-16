@@ -17,13 +17,13 @@ import {
 } from '../../../components/ui/combobox'
 import BottomNav from '../../../components/ui/BottomNav'
 import {
-  UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, PRICE_TIERS,
-  calcMasterScore, calcBFB, type WhiskeyType, type PriceTier, type Scores,
+  TASTE_SUBSCORES, APPEARANCE_SUBSCORES, PRICE_TIERS, PRICE_TIER_RANGE,
+  calcMasterScore, calcBFB, type PriceTier, type Scores,
 } from '../../../lib/scoring'
 import type { Whiskey } from '../../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
-const EMPTY: Partial<Scores> = { nose:0, palate:0, finish:0, type_score_1:0, type_score_2:0 }
+const EMPTY: Partial<Scores> = { nose: 0, palate: 0, finish: 0, bottle: 0, label: 0 }
 
 export default function Page() {
   return (
@@ -34,18 +34,18 @@ export default function Page() {
 }
 
 function LogPourPage() {
-  const params   = useParams<{ whiskey_id?: string[] }>()
+  const params    = useParams<{ whiskey_id?: string[] }>()
   const prefillId = params.whiskey_id?.[0] ?? ''
-  const router   = useRouter()
+  const router    = useRouter()
   const { user, loading: authLoading } = useAuth()
 
-  const [whiskeys, setWhiskeys]   = useState<Whiskey[]>([])
+  const [whiskeys, setWhiskeys]               = useState<Whiskey[]>([])
   const [selectedWhiskey, setSelectedWhiskey] = useState<Whiskey | null>(null)
-  const [scores, setScores]       = useState<Partial<Scores>>({ ...EMPTY })
-  const [priceTier, setPriceTier] = useState<PriceTier | ''>('')
-  const [notes, setNotes]         = useState('')
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState('')
+  const [scores, setScores]                   = useState<Partial<Scores>>({ ...EMPTY })
+  const [priceTier, setPriceTier]             = useState<PriceTier | ''>('')
+  const [notes, setNotes]                     = useState('')
+  const [saving, setSaving]                   = useState(false)
+  const [error, setError]                     = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -57,14 +57,14 @@ function LogPourPage() {
       setWhiskeys(data ?? [])
       if (prefillId) {
         const w = data?.find(w => w.id === prefillId)
-        if (w) { setSelectedWhiskey(w); setPriceTier(w.price_tier ?? '') }
+        if (w) { setSelectedWhiskey(w); setPriceTier((w.price_tier as PriceTier) ?? '') }
       }
     })
   }, [user])
 
   function handleWhiskeyChange(whiskey: Whiskey | null) {
     setSelectedWhiskey(whiskey)
-    setPriceTier(whiskey?.price_tier ?? '')
+    setPriceTier((whiskey?.price_tier as PriceTier) ?? '')
     setScores({ ...EMPTY })
   }
 
@@ -78,12 +78,15 @@ function LogPourPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedWhiskey)  { setError('Select a whiskey first'); return }
-    if (!priceTier)   { setError('Select a price tier'); return }
+    if (!selectedWhiskey) { setError('Select a whiskey first'); return }
+    if (!priceTier)        { setError('Select a price tier'); return }
     setSaving(true); setError('')
     const { error: err } = await createClient().from('pours').insert({
-      user_id: user!.id, whiskey_id: selectedWhiskey.id,
-      scores, master_score: masterScore, bfb_score: bfbScore,
+      user_id:    user!.id,
+      whiskey_id: selectedWhiskey.id,
+      scores,
+      master_score: masterScore,
+      bfb_score:    bfbScore,
       tasting_notes: notes || null,
       price_tier_override: priceTier as PriceTier,
     })
@@ -91,8 +94,6 @@ function LogPourPage() {
     if (err) { setError(err.message); return }
     router.push('/cellar')
   }
-
-  const typeScoreDefs = selectedWhiskey ? (TYPE_SUBSCORES[selectedWhiskey.type as WhiskeyType] ?? []) : []
 
   if (authLoading) return (
     <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
@@ -110,7 +111,8 @@ function LogPourPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Whiskey */}
+
+        {/* Whiskey selector */}
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">Whiskey</label>
           {selectedWhiskey ? (
@@ -121,22 +123,17 @@ function LogPourPage() {
               </div>
               <div className="flex items-center gap-2">
                 <TagPill label={selectedWhiskey.type} variant="type" />
-                <button type="button" onClick={() => { setSelectedWhiskey(null); }}
+                <button type="button" onClick={() => setSelectedWhiskey(null)}
                   className="text-cellar-muted text-xs underline">change</button>
               </div>
             </div>
           ) : (
             <Combobox value={selectedWhiskey} onValueChange={handleWhiskeyChange} items={whiskeys}>
-              <ComboboxInput
-                placeholder="Select a whiskey…"
-                showClear
-                showTrigger
-                className="input"
-              />
+              <ComboboxInput placeholder="Select a whiskey…" showClear showTrigger className="input" />
               <ComboboxContent className="bg-cellar-card">
                 <ComboboxList>
                   <ComboboxCollection>
-                    {(item, index) => (
+                    {(item) => (
                       <ComboboxItem key={item.id} value={item}>
                         <div className="flex flex-col">
                           <span className="text-cellar-cream text-sm">{item.name}</span>
@@ -152,18 +149,24 @@ function LogPourPage() {
           )}
         </div>
 
-        {/* Price tier */}
+        {/* Price — dollar signs */}
         <div>
-          <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">Price Tier</label>
-          <div className="flex gap-2 flex-wrap">
+          <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">Price</label>
+          <div className="flex gap-2">
             {PRICE_TIERS.map(t => (
               <button key={t} type="button" onClick={() => setPriceTier(t)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-all ${
-                  priceTier === t ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
+                className={`flex-1 rounded-xl py-2.5 text-sm font-semibold border transition-all ${
+                  priceTier === t
+                    ? 'bg-cellar-amber border-cellar-amber text-cellar-bg'
+                    : 'bg-cellar-surface border-cellar-border text-cellar-muted'
+                }`}>
                 {t}
               </button>
             ))}
           </div>
+          {priceTier && (
+            <p className="text-cellar-muted text-xs mt-1.5 text-center">{PRICE_TIER_RANGE[priceTier]}</p>
+          )}
         </div>
 
         {/* Scores */}
@@ -176,25 +179,28 @@ function LogPourPage() {
                 {bfbScore > 0 && <BFBBadge score={bfbScore} />}
               </div>
             </div>
-            {UNIVERSAL_SUBSCORES.map(s => (
-              <ScoreSlider key={s.key} label={s.label} scoreKey={s.key}
-                value={(scores as Record<string,number>)[s.key] ?? 0} onChange={handleScore} />
-            ))}
-            {typeScoreDefs.length > 0 && (
-              <div className="border-t border-cellar-border pt-4">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-4">{selectedWhiskey.type}-specific</p>
-                {typeScoreDefs.map((s, i) => (
-                  <div key={s.key} className="mb-5 last:mb-0">
-                    <ScoreSlider label={s.label} scoreKey={`type_score_${i+1}`}
-                      value={(scores as Record<string,number>)[`type_score_${i+1}`] ?? 0} onChange={handleScore} />
-                  </div>
-                ))}
-              </div>
-            )}
+
+            {/* Taste */}
+            <div className="space-y-5">
+              <p className="text-cellar-muted text-xs uppercase tracking-wide">Taste</p>
+              {TASTE_SUBSCORES.map(s => (
+                <ScoreSlider key={s.key} label={s.label} scoreKey={s.key}
+                  value={(scores as Record<string, number>)[s.key] ?? 0} onChange={handleScore} />
+              ))}
+            </div>
+
+            {/* Appearance */}
+            <div className="border-t border-cellar-border pt-5 space-y-5">
+              <p className="text-cellar-muted text-xs uppercase tracking-wide">Appearance</p>
+              {APPEARANCE_SUBSCORES.map(s => (
+                <ScoreSlider key={s.key} label={s.label} scoreKey={s.key}
+                  value={(scores as Record<string, number>)[s.key] ?? 0} onChange={handleScore} />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Notes */}
+        {/* Tasting notes */}
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">
             Tasting Notes <span className="normal-case">(optional)</span>

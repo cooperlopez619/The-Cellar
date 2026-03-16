@@ -8,7 +8,7 @@ import SubScoreBar from '../../../components/ui/SubScoreBar'
 import TagPill from '../../../components/ui/TagPill'
 import BFBBadge from '../../../components/ui/BFBBadge'
 import BottomNav from '../../../components/ui/BottomNav'
-import { PRICE_TIER_RANGE, UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, type WhiskeyType } from '../../../lib/scoring'
+import { PRICE_TIER_RANGE, TASTE_SUBSCORES, APPEARANCE_SUBSCORES, ALL_SUBSCORES } from '../../../lib/scoring'
 import type { Whiskey, Pour } from '../../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -57,13 +57,9 @@ function WhiskeyDetailPage() {
   const avgBFB = pours.length
     ? +(pours.reduce((a, p) => a + (p.bfb_score ?? 0), 0) / pours.length).toFixed(2) : 0
 
-  const typeScoreDefs = TYPE_SUBSCORES[whiskey.type as WhiskeyType] ?? []
-  const allSubs = [...UNIVERSAL_SUBSCORES, ...typeScoreDefs]
-
-  const avgSubScore = (key: string, idx: number): number => {
-    const scoreKey = idx < 3 ? key : `type_score_${idx - 2}`
-    const vals = pours.map(p => (p.scores as Record<string,number>)?.[scoreKey]).filter(v => v > 0)
-    return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : 0
+  const avgSubScore = (key: string): number => {
+    const vals = pours.map(p => (p.scores as Record<string, number>)?.[key]).filter(v => v > 0)
+    return vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : 0
   }
 
   return (
@@ -73,6 +69,7 @@ function WhiskeyDetailPage() {
         Back
       </button>
 
+      {/* Header card */}
       <div className="card p-5 mb-4">
         <div className="flex items-start gap-4">
           <ScoreRing score={avgMaster} size={72} />
@@ -83,7 +80,9 @@ function WhiskeyDetailPage() {
               <TagPill label={whiskey.type} variant="type" />
               {whiskey.region && <TagPill label={whiskey.region} />}
               {whiskey.abv && <TagPill label={`${whiskey.abv}% ABV`} />}
-              {whiskey.price_tier && <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier]}`} />}
+              {whiskey.price_tier && (
+                <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier as keyof typeof PRICE_TIER_RANGE] ?? ''}`} />
+              )}
             </div>
             {avgBFB > 0 && <div className="mt-2"><BFBBadge score={avgBFB} /></div>}
           </div>
@@ -91,15 +90,32 @@ function WhiskeyDetailPage() {
         <p className="text-cellar-muted text-xs mt-3">{pours.length} community {pours.length === 1 ? 'pour' : 'pours'}</p>
       </div>
 
+      {/* Score breakdown */}
       {pours.length > 0 && (
         <div className="card p-5 mb-4">
           <h2 className="section-title mb-4">Community Breakdown</h2>
-          <div className="space-y-3">
-            {allSubs.map((s, i) => <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key, i)} />)}
+
+          <div className="space-y-1 mb-4">
+            <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Taste</p>
+            <div className="space-y-3">
+              {TASTE_SUBSCORES.map(s => (
+                <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-cellar-border pt-4 space-y-1">
+            <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Appearance</p>
+            <div className="space-y-3">
+              {APPEARANCE_SUBSCORES.map(s => (
+                <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+              ))}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Tasting notes */}
       {pours.some(p => p.tasting_notes) && (
         <div className="card p-5 mb-4">
           <h2 className="section-title mb-3">Tasting Notes</h2>

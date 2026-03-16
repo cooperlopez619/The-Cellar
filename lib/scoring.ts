@@ -1,38 +1,45 @@
 export type WhiskeyType = 'Bourbon' | 'Scotch' | 'Japanese' | 'Irish' | 'Rye'
-export type PriceTier   = 'Budget' | 'Mid' | 'Premium' | 'Luxury' | 'Unicorn'
+export type PriceTier   = '$' | '$$' | '$$$' | '$$$$' | '$$$$$'
 
 export interface SubScoreDef { key: string; label: string }
 export interface Scores {
-  nose:         number
-  palate:       number
-  finish:       number
-  type_score_1: number
-  type_score_2: number
+  nose:    number   // Nose / Aroma
+  palate:  number   // Palate / Taste
+  finish:  number   // Finish / Aftertaste
+  bottle:  number   // Bottle Shape & Design
+  label:   number   // Label & Branding
 }
 
-export const TYPE_SUBSCORES: Record<WhiskeyType, [SubScoreDef, SubScoreDef]> = {
-  Bourbon:  [{ key: 'oak_vanilla', label: 'Oak & Vanilla' }, { key: 'sweetness',  label: 'Sweetness'    }],
-  Scotch:   [{ key: 'peat_smoke',  label: 'Peat & Smoke'  }, { key: 'brine_fruit', label: 'Brine & Fruit' }],
-  Japanese: [{ key: 'balance',     label: 'Balance'        }, { key: 'refinement',  label: 'Refinement'   }],
-  Irish:    [{ key: 'smoothness',  label: 'Smoothness'     }, { key: 'lightness',   label: 'Lightness'    }],
-  Rye:      [{ key: 'spice',       label: 'Spice'          }, { key: 'dryness',     label: 'Dryness'      }],
-}
-
-export const UNIVERSAL_SUBSCORES: SubScoreDef[] = [
+export const TASTE_SUBSCORES: SubScoreDef[] = [
   { key: 'nose',   label: 'Nose'   },
   { key: 'palate', label: 'Palate' },
   { key: 'finish', label: 'Finish' },
 ]
 
+export const APPEARANCE_SUBSCORES: SubScoreDef[] = [
+  { key: 'bottle', label: 'Bottle Design'    },
+  { key: 'label',  label: 'Label & Branding' },
+]
+
+/** All subscores — used for detail page breakdown */
+export const ALL_SUBSCORES: SubScoreDef[] = [...TASTE_SUBSCORES, ...APPEARANCE_SUBSCORES]
+
+/** Alias so existing imports still resolve */
+export const UNIVERSAL_SUBSCORES = TASTE_SUBSCORES
+
 export function calcMasterScore(scores: Partial<Scores>): number {
-  const keys: (keyof Scores)[] = ['nose', 'palate', 'finish', 'type_score_1', 'type_score_2']
+  const keys: (keyof Scores)[] = ['nose', 'palate', 'finish', 'bottle', 'label']
   const vals = keys.map(k => Number(scores[k])).filter(v => v > 0)
   if (!vals.length) return 0
   return parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2))
 }
 
 const BFB_MULT: Record<PriceTier, number> = {
-  Budget: 2.0, Mid: 1.6, Premium: 1.2, Luxury: 0.8, Unicorn: 0.5,
+  '$':     2.0,
+  '$$':    1.6,
+  '$$$':   1.2,
+  '$$$$':  0.8,
+  '$$$$$': 0.5,
 }
 
 export function calcBFB(masterScore: number, priceTier: PriceTier): number {
@@ -51,10 +58,15 @@ export function bfbLabel(bfb: number): string {
   return 'Pricey'
 }
 
-export const PRICE_TIERS: PriceTier[] = ['Budget', 'Mid', 'Premium', 'Luxury', 'Unicorn']
+export const PRICE_TIERS: PriceTier[] = ['$', '$$', '$$$', '$$$$', '$$$$$']
 export const PRICE_TIER_RANGE: Record<PriceTier, string> = {
-  Budget: '<$30', Mid: '$30–$60', Premium: '$60–$120', Luxury: '$120–$300', Unicorn: '$300+',
+  '$':     '<$30',
+  '$$':    '$30–$60',
+  '$$$':   '$60–$120',
+  '$$$$':  '$120–$300',
+  '$$$$$': '$300+',
 }
+
 export const WHISKEY_TYPES: WhiskeyType[] = ['Bourbon', 'Scotch', 'Japanese', 'Irish', 'Rye']
 export const TYPE_COLOR: Record<WhiskeyType, string> = {
   Bourbon:  'bg-amber-900/40 text-amber-300 border-amber-700/40',

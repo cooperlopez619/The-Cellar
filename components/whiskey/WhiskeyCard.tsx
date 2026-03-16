@@ -3,7 +3,7 @@ import Link from 'next/link'
 import ScoreRing from '../ui/ScoreRing'
 import TagPill from '../ui/TagPill'
 import BFBBadge from '../ui/BFBBadge'
-import { PRICE_TIER_RANGE } from '../../lib/scoring'
+import { PRICE_TIER_RANGE, type PriceTier } from '../../lib/scoring'
 import type { Whiskey } from '../../lib/database.types'
 
 interface Props { whiskey: Whiskey; communityScore?: number; communityBFB?: number }
@@ -22,7 +22,9 @@ export default function WhiskeyCard({ whiskey, communityScore = 0, communityBFB 
             <TagPill label={whiskey.type} variant="type" />
             {whiskey.region && <TagPill label={whiskey.region} />}
             {whiskey.abv && <TagPill label={`${whiskey.abv}%`} />}
-            {whiskey.price_tier && <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier]}`} />}
+            {whiskey.price_tier && (
+              <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier as PriceTier] ?? ''}`} />
+            )}
           </div>
           {communityBFB > 0 && <div className="mt-2"><BFBBadge score={communityBFB} /></div>}
         </div>
