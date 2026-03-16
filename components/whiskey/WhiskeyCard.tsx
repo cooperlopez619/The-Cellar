@@ -62,7 +62,7 @@ export default function WhiskeyCard({
               <button
                 type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite() }}
-                className={`transition-colors ${isFavorite ? 'text-cellar-amber' : 'text-cellar-border hover:text-cellar-muted'}`}
+                className={`transition-colors ${isFavorite ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
                 aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <StarIcon filled={isFavorite} />
@@ -72,7 +72,7 @@ export default function WhiskeyCard({
               <button
                 type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleWishlist() }}
-                className={`transition-colors ${isWishlist ? 'text-cellar-amber' : 'text-cellar-border hover:text-cellar-muted'}`}
+                className={`transition-colors ${isWishlist ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
                 aria-label={isWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >
                 <BookmarkIcon filled={isWishlist} />
