@@ -3,9 +3,9 @@ interface Props { score?: number; size?: number; strokeWidth?: number }
 
 function scoreColor(score: number): string {
   if (score <= 0) return '#2A3A42'
-  if (score >= 4) return '#4CAF7D'
-  if (score >= 3) return '#CF9D7B'
-  return '#D4563A'
+  if (score >= 4) return '#52D48A'
+  if (score >= 3) return '#E0AC80'
+  return '#F07060'
 }
 
 export default function ScoreRing({ score = 0, size = 64, strokeWidth = 5 }: Props) {

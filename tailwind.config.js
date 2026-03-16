@@ -17,8 +17,8 @@ module.exports = {
           'amber-light': '#CF9D7B',  // Antique Brass
           cream:   '#CF9D7B',  // Antique Brass — headings
           muted:   '#7A8E94',  // desaturated teal-grey
-          green:   '#4CAF7D',
-          red:     '#D4563A',
+          green:   '#52D48A',
+          red:     '#F07060',
         },
       },
       keyframes: {
