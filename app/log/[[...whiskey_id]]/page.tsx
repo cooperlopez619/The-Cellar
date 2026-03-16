@@ -311,15 +311,15 @@ function LogPourPage() {
           >
             <div className="flex items-center justify-between">
               <h2 className="section-title">Your Scores</h2>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5">
                 <div className="flex flex-col items-center gap-1">
                   <ScoreRing score={masterScore} size={52} strokeWidth={4} />
-                  <span className="text-cellar-muted text-xs">Overall</span>
+                  <span className="text-cellar-muted text-xs text-center">Overall</span>
                 </div>
                 {bfbScore > 0 && (
                   <div className="flex flex-col items-center gap-1">
                     <BFBBadge score={bfbScore} />
-                    <span className="text-cellar-muted text-xs">Bang for Your Buck</span>
+                    <span className="text-cellar-muted text-xs text-center">BFB</span>
                   </div>
                 )}
               </div>
