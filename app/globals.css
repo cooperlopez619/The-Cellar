@@ -93,7 +93,7 @@
 
 @layer components {
   .page {
-    @apply min-h-screen bg-cellar-bg pb-24 pt-4 px-4 max-w-lg mx-auto;
+    @apply bg-cellar-bg pt-4 px-4 pb-8;
   }
   .card {
     @apply bg-cellar-card border border-cellar-border rounded-2xl;

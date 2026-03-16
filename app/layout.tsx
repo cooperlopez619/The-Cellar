@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { Inter, Cormorant_Garamond, Geist } from 'next/font/google'
 import Providers from './providers'
+import BottomNav from '../components/ui/BottomNav'
 import './globals.css'
 import { cn } from "@/lib/utils";
 
@@ -18,8 +20,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cn(inter.variable, playfair.variable, "font-sans", geist.variable)}>
-      <body className="font-sans">
-        <Providers>{children}</Providers>
+      <body className="font-sans h-dvh overflow-hidden flex flex-col max-w-lg mx-auto">
+        <Providers>
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+          <Suspense><BottomNav /></Suspense>
+        </Providers>
       </body>
     </html>
   )

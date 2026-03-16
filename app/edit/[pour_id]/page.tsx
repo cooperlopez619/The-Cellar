@@ -6,7 +6,6 @@ import ScoreSlider from '../../../components/whiskey/ScoreSlider'
 import ScoreRing from '../../../components/ui/ScoreRing'
 import BFBBadge from '../../../components/ui/BFBBadge'
 import TagPill from '../../../components/ui/TagPill'
-import BottomNav from '../../../components/ui/BottomNav'
 import {
   TASTE_SUBSCORES, APPEARANCE_SUBSCORES, PRICE_TIERS, PRICE_TIER_RANGE,
   calcMasterScore, calcBFB, type PriceTier, type Scores,
@@ -230,7 +229,6 @@ function EditPourPage() {
           </div>
         )}
       </div>
-      <BottomNav />
     </div>
   )
 }

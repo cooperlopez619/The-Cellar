@@ -9,15 +9,16 @@ const NAV: NavItem[] = [
   { href: '/',        label: 'Catalog',
     icon: (a) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a?2.2:1.6} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
   { href: '/cellar',  label: 'My Cellar',
-    icon: (a) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a?2.2:1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l2 6H6L8 2z"/><path d="M6 8v12a2 2 0 002 2h8a2 2 0 002-2V8"/><line x1="12" y1="12" x2="12" y2="18"/></svg> },
+    icon: (a) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a?2.2:1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg> },
   { href: '/profile', label: 'Profile',
     icon: (a) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a?2.2:1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
 ]
 
 export default function BottomNav() {
   const path = usePathname()
+  if (path.startsWith('/auth')) return null
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-cellar-surface border-t border-cellar-border flex items-center justify-around px-2 h-16 max-w-lg mx-auto">
+    <nav className="shrink-0 bg-cellar-surface border-t border-cellar-border flex items-center justify-around px-2 h-16">
       {NAV.map(({ href, label, icon }) => {
         const active = href === '/' ? path === '/' : path.startsWith(href)
         return (

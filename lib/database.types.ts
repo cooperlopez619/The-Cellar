@@ -21,9 +21,18 @@ export interface Pour {
   master_score:         number | null
   bfb_score:            number | null
   tasting_notes:        string | null
+  bottle_photo_url:     string | null
   price_tier_override:  PriceTier | null
   created_at:           string
   whiskeys?:            Whiskey
+}
+
+export interface UserList {
+  id:          string
+  user_id:     string
+  whiskey_id:  string
+  list_type:   'favorite' | 'wishlist'
+  created_at:  string
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -42,6 +51,12 @@ export type Database = {
         Row:           Pour
         Insert:        Omit<Pour, 'id' | 'created_at' | 'whiskeys'>
         Update:        Partial<Pour>
+        Relationships: []
+      }
+      user_lists: {
+        Row:           UserList
+        Insert:        Omit<UserList, 'id' | 'created_at'>
+        Update:        Partial<UserList>
         Relationships: []
       }
     }

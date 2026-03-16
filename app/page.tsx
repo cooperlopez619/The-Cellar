@@ -1,25 +1,88 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../hooks/useAuth'
 import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
-import BottomNav from '../components/ui/BottomNav'
+import CellarLogo from '../components/ui/CellarLogo'
 import type { Whiskey } from '../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
 type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
+function FilterDropdown({ value, onChange, options, placeholder }: {
+  value: string
+  onChange: (v: string) => void
+  options: readonly string[]
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const label = value || placeholder
+
+  return (
+    <div ref={ref} className="relative flex-1">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center justify-between gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all ${
+          value ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'
+        }`}
+      >
+        <span>{label}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+          className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M2 4l4 4 4-4"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-cellar-surface border border-cellar-border rounded-xl overflow-hidden shadow-lg">
+          <button
+            onClick={() => { onChange(''); setOpen(false) }}
+            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+              !value ? 'text-cellar-amber font-medium' : 'text-cellar-muted hover:text-cellar-text hover:bg-cellar-bg'
+            }`}
+          >
+            {placeholder}
+          </button>
+          {options.map(opt => (
+            <button
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false) }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t border-cellar-border/50 ${
+                value === opt ? 'text-cellar-amber font-medium' : 'text-cellar-muted hover:text-cellar-text hover:bg-cellar-bg'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CatalogPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [whiskeys, setWhiskeys] = useState<Whiskey[]>([])
-  const [stats, setStats]       = useState<Stats>({})
-  const [search, setSearch]     = useState('')
-  const [typeFilter, setType]   = useState('')
-  const [tierFilter, setTier]   = useState('')
-  const [loading, setLoading]   = useState(true)
+  const [whiskeys, setWhiskeys]     = useState<Whiskey[]>([])
+  const [stats, setStats]           = useState<Stats>({})
+  const [search, setSearch]         = useState('')
+  const [typeFilter, setType]       = useState('')
+  const [tierFilter, setTier]       = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [favorites, setFavorites]   = useState<Set<string>>(new Set())
+  const [wishlists, setWishlists]   = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -29,13 +92,32 @@ export default function CatalogPage() {
     if (!user) return
     const supabase = createClient()
     async function load() {
-      const { data } = await supabase.from('whiskeys').select('*').order('name')
-      setWhiskeys(data ?? [])
+      let all: Whiskey[] = []
+      let from = 0
+      const PAGE = 1000
+      while (true) {
+        const { data, error } = await supabase
+          .from('whiskeys').select('*').order('name').range(from, from + PAGE - 1)
+        if (error || !data?.length) break
+        all = [...all, ...data]
+        if (data.length < PAGE) break
+        from += PAGE
+      }
+      setWhiskeys(all)
       setLoading(false)
-      if (data?.length) {
+
+      // Load user lists
+      const { data: lists } = await supabase
+        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user.id)
+      if (lists) {
+        setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
+        setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
+      }
+
+      if (all.length) {
         const { data: pours } = await supabase
           .from('pours').select('whiskey_id, master_score, bfb_score')
-          .in('whiskey_id', data.map(w => w.id))
+          .in('whiskey_id', all.map(w => w.id))
         const map: Record<string, { s: number[]; b: number[] }> = {}
         for (const p of pours ?? []) {
           if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
@@ -55,6 +137,21 @@ export default function CatalogPage() {
     load()
   }, [user])
 
+  async function toggleList(whiskeyId: string, type: 'favorite' | 'wishlist') {
+    if (!user) return
+    const supabase = createClient()
+    const set = type === 'favorite' ? favorites : wishlists
+    const setFn = type === 'favorite' ? setFavorites : setWishlists
+    if (set.has(whiskeyId)) {
+      setFn(prev => { const n = new Set(prev); n.delete(whiskeyId); return n })
+      await supabase.from('user_lists').delete()
+        .eq('user_id', user.id).eq('whiskey_id', whiskeyId).eq('list_type', type)
+    } else {
+      setFn(prev => new Set(prev).add(whiskeyId))
+      await supabase.from('user_lists').insert({ user_id: user.id, whiskey_id: whiskeyId, list_type: type })
+    }
+  }
+
   if (authLoading || !user) return (
     <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
@@ -69,9 +166,8 @@ export default function CatalogPage() {
 
   return (
     <div className="page">
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="font-serif text-cellar-cream text-2xl font-bold">The Cellar</h1>
-        <Link href="/log" className="btn-primary text-xs px-3 py-2 inline-block">+ Log Pour</Link>
+      <div className="flex justify-center mb-5">
+        <CellarLogo size={110} />
       </div>
 
       <div className="relative mb-3">
@@ -83,24 +179,9 @@ export default function CatalogPage() {
           value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-2 no-scrollbar">
-        {['', ...WHISKEY_TYPES].map(t => (
-          <button key={t} onClick={() => setType(t)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-all ${
-              typeFilter === t ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
-            {t || 'All Types'}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
-        {['', ...PRICE_TIERS].map(t => (
-          <button key={t} onClick={() => setTier(t)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-all ${
-              tierFilter === t ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
-            {t || 'All Prices'}
-          </button>
-        ))}
+      <div className="flex gap-3 mb-4">
+        <FilterDropdown value={typeFilter} onChange={setType} options={WHISKEY_TYPES} placeholder="All Types" />
+        <FilterDropdown value={tierFilter} onChange={setTier} options={PRICE_TIERS} placeholder="All Prices" />
       </div>
 
       {loading ? (
@@ -117,11 +198,14 @@ export default function CatalogPage() {
           {filtered.map(w => (
             <WhiskeyCard key={w.id} whiskey={w}
               communityScore={stats[w.id]?.avgScore ?? 0}
-              communityBFB={stats[w.id]?.avgBFB ?? 0} />
+              communityBFB={stats[w.id]?.avgBFB ?? 0}
+              isFavorite={favorites.has(w.id)}
+              isWishlist={wishlists.has(w.id)}
+              onToggleFavorite={() => toggleList(w.id, 'favorite')}
+              onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
           ))}
         </div>
       )}
-      <BottomNav />
     </div>
   )
 }

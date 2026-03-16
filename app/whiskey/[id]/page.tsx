@@ -7,7 +7,6 @@ import ScoreRing from '../../../components/ui/ScoreRing'
 import SubScoreBar from '../../../components/ui/SubScoreBar'
 import TagPill from '../../../components/ui/TagPill'
 import BFBBadge from '../../../components/ui/BFBBadge'
-import BottomNav from '../../../components/ui/BottomNav'
 import { PRICE_TIER_RANGE, TASTE_SUBSCORES, APPEARANCE_SUBSCORES, ALL_SUBSCORES } from '../../../lib/scoring'
 import type { Whiskey, Pour } from '../../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
@@ -133,7 +132,6 @@ function WhiskeyDetailPage() {
       )}
 
       <Link href={`/log/${whiskey.id}`} className="btn-primary">Log a Pour</Link>
-      <BottomNav />
     </div>
   )
 }
