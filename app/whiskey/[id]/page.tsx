@@ -115,9 +115,9 @@ function WhiskeyDetailPage() {
       )}
 
       {/* Comments */}
-      {pours.some(p => p.tasting_notes) && (
-        <div className="card p-5 mb-4">
-          <h2 className="section-title mb-3">Comments</h2>
+      <div className="card p-5 mb-4">
+        <h2 className="section-title mb-3">Comments</h2>
+        {pours.some(p => p.tasting_notes) ? (
           <div className="space-y-4">
             {pours.filter(p => p.tasting_notes).map(p => (
               <div key={p.id} className="border-l-2 border-cellar-amber/40 pl-3">
@@ -131,8 +131,10 @@ function WhiskeyDetailPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-cellar-muted text-sm">No comments yet. Log a pour to leave one.</p>
+        )}
+      </div>
 
       <Link href={`/log/${whiskey.id}`} className="btn-primary">Log a Pour</Link>
     </div>
