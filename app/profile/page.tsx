@@ -27,7 +27,8 @@ function PinIcon() {
 export default function ProfilePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [pourCount, setPourCount] = useState<number | null>(null)
+  const [pourCount,   setPourCount]   = useState<number | null>(null)
+  const [favType,     setFavType]     = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/auth')
@@ -35,11 +36,28 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return
-    createClient()
-      .from('pours')
+    const sb = createClient()
+
+    // Total pour count
+    sb.from('pours')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .then(({ count }) => setPourCount(count ?? 0))
+
+    // Favorite type from pour history
+    sb.from('pours')
+      .select('whiskeys(type)')
+      .eq('user_id', user.id)
+      .then(({ data }) => {
+        if (!data?.length) return
+        const counts: Record<string, number> = {}
+        data.forEach((p: any) => {
+          const t = p.whiskeys?.type
+          if (t) counts[t] = (counts[t] ?? 0) + 1
+        })
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+        if (top) setFavType(top[0])
+      })
   }, [user])
 
   if (loading || !user) return (
@@ -86,15 +104,23 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Pours stat */}
-      <div className="card p-5 flex items-center justify-between mb-3">
-        <div>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {/* Pours logged */}
+        <div className="card p-5">
           <p className="text-cellar-muted text-xs uppercase tracking-wide">Pours Logged</p>
           <p className="text-cellar-amber font-serif font-bold text-4xl mt-1">
             {pourCount === null ? '—' : pourCount}
           </p>
         </div>
-        <div className="text-5xl opacity-50">🥃</div>
+
+        {/* Favorite type */}
+        <div className="card p-5">
+          <p className="text-cellar-muted text-xs uppercase tracking-wide">Favorite Type</p>
+          <p className="text-cellar-cream font-serif font-bold text-xl mt-1 leading-tight">
+            {favType ?? (pourCount === 0 ? 'None yet' : '—')}
+          </p>
+        </div>
       </div>
 
       {/* Rank */}
