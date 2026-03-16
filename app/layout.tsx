@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Inter, Cormorant_Garamond, Geist } from 'next/font/google'
 import Providers from './providers'
 import BottomNav from '../components/ui/BottomNav'
+import TutorialOverlay from '../components/ui/TutorialOverlay'
 import './globals.css'
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
           <Suspense><BottomNav /></Suspense>
+          <TutorialOverlay />
         </Providers>
       </body>
     </html>
