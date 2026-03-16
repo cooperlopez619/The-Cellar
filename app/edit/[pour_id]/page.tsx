@@ -36,6 +36,8 @@ function EditPourPage() {
   const [notes, setNotes]         = useState('')
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
+  const [deleting, setDeleting]   = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError]         = useState('')
 
   useEffect(() => {
@@ -67,6 +69,18 @@ function EditPourPage() {
 
   const masterScore = calcMasterScore(scores)
   const bfbScore    = priceTier ? calcBFB(masterScore, priceTier) : 0
+
+  async function handleDelete() {
+    setDeleting(true); setError('')
+    const { error: err } = await createClient()
+      .from('pours')
+      .delete()
+      .eq('id', pour_id)
+      .eq('user_id', user!.id)
+    setDeleting(false)
+    if (err) { setError(err.message); setConfirmDelete(false); return }
+    router.push('/cellar')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -182,6 +196,40 @@ function EditPourPage() {
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </form>
+
+      {/* Delete */}
+      <div className="mt-6 mb-8">
+        {!confirmDelete ? (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="w-full py-3 rounded-xl text-sm font-medium text-cellar-red border border-cellar-red/30 bg-cellar-red/5 transition-colors hover:bg-cellar-red/10"
+          >
+            Delete Pour
+          </button>
+        ) : (
+          <div className="card p-4 border border-cellar-red/40 space-y-3">
+            <p className="text-cellar-cream text-sm text-center">Delete this pour? This can't be undone.</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-cellar-border text-cellar-muted bg-cellar-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-cellar-red text-white border border-cellar-red transition-colors"
+              >
+                {deleting ? 'Deleting…' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       <BottomNav />
     </div>
   )
