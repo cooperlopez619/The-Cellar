@@ -16,7 +16,7 @@ Download the LTS installer from [nodejs.org](https://nodejs.org) and run it.
 ```bash
 cp .env.example .env.local
 ```
-Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from **Settings → API**.
+Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from **Settings → API**.
 
 ### 4. Install and run
 ```bash

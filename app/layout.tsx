@@ -26,8 +26,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main className="flex-1 overflow-y-auto">
             {children}
           </main>
-          <Suspense><BottomNav /></Suspense>
-          <TutorialOverlay />
+          <Suspense>
+            <BottomNav />
+            <TutorialOverlay />
+          </Suspense>
         </Providers>
       </body>
     </html>
