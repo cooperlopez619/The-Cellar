@@ -38,6 +38,7 @@ function EditPourPage() {
   const [deleting, setDeleting]   = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError]         = useState('')
+  const [scoreError, setScoreError] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -64,6 +65,8 @@ function EditPourPage() {
 
   function handleScore(key: string, val: number) {
     setScores(prev => ({ ...prev, [key]: val }))
+    if (scoreError) setScoreError(false)
+    if (error) setError('')
   }
 
   const masterScore = calcMasterScore(scores)
@@ -84,6 +87,16 @@ function EditPourPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!priceTier) { setError('Select a price tier'); return }
+
+    const scoreKeys: (keyof Scores)[] = ['nose', 'palate', 'finish', 'bottle', 'label']
+    const missingScores = scoreKeys.some(k => !scores[k] || scores[k] === 0)
+    if (missingScores) {
+      setScoreError(true)
+      setError('Please rate all 5 categories before saving')
+      document.querySelector('[data-scores-section]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    setScoreError(false)
     setSaving(true); setError('')
     const { error: err } = await createClient()
       .from('pours')
@@ -152,7 +165,10 @@ function EditPourPage() {
         </div>
 
         {/* Scores */}
-        <div className="card p-5 space-y-5">
+        <div
+          data-scores-section
+          className={`card p-5 space-y-5 transition-colors ${scoreError ? 'border-red-500/70' : ''}`}
+        >
           <div className="flex items-center justify-between">
             <h2 className="section-title">Your Scores</h2>
             <div className="flex items-center gap-3">
