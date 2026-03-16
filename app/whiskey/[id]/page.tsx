@@ -39,7 +39,7 @@ function WhiskeyDetailPage() {
     const sb = createClient()
     Promise.all([
       sb.from('whiskeys').select('*').eq('id', id).single(),
-      sb.from('pours').select('*').eq('whiskey_id', id),
+      sb.from('pours').select('*').eq('whiskey_id', id).eq('user_id', user.id),
     ]).then(async ([{ data: w }, { data: p }]) => {
       setWhiskey(w)
       const pourList = p ?? []
@@ -121,7 +121,7 @@ function WhiskeyDetailPage() {
     return vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : 0
   }
 
-  const commentedPours = pours.filter(p => p.tasting_notes)
+  const commentedPours = pours.filter(p => p.tasting_notes && p.tasting_notes.trim())
 
   return (
     <div className="page">

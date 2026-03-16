@@ -8,7 +8,7 @@ import SubScoreBar from '../../components/ui/SubScoreBar'
 import TagPill from '../../components/ui/TagPill'
 import BFBBadge from '../../components/ui/BFBBadge'
 import WhiskeyCard from '../../components/whiskey/WhiskeyCard'
-import { ALL_SUBSCORES, WHISKEY_TYPES } from '../../lib/scoring'
+import { ALL_SUBSCORES, WHISKEY_TYPES, calcMasterScore, type Scores } from '../../lib/scoring'
 import HelpButton from '../../components/ui/HelpButton'
 import type { Pour, Whiskey } from '../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
@@ -176,7 +176,7 @@ export default function MyCellarPage() {
                       onKeyDown={e => e.key === 'Enter' && setExpanded(isOpen ? null : pour.id)}
                       className="w-full text-left p-4 cursor-pointer">
                       <div className="flex items-start gap-3">
-                        <div className="shrink-0 pt-1"><ScoreRing score={pour.master_score ?? 0} size={52} strokeWidth={4} /></div>
+                        <div className="shrink-0 pt-1"><ScoreRing score={pour.master_score ?? calcMasterScore((pour.scores ?? {}) as Partial<Scores>)} size={52} strokeWidth={4} /></div>
                         <div className="flex-1 min-w-0">
                           <p className="font-serif text-cellar-cream font-semibold text-sm leading-tight truncate">{w?.name ?? 'Unknown'}</p>
                           <p className="text-cellar-muted text-xs mt-0.5">{w?.distillery}</p>

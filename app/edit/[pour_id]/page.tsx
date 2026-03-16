@@ -56,7 +56,15 @@ function EditPourPage() {
         if (err || !data) { router.replace('/cellar'); return }
         setPour(data)
         setWhiskey(data.whiskeys as any)
-        setScores((data.scores as Partial<Scores>) ?? { ...EMPTY })
+        // Coerce all score values to numbers — JSONB can sometimes return strings
+        const raw = (data.scores ?? {}) as Record<string, unknown>
+        const keys: (keyof Scores)[] = ['nose', 'palate', 'finish', 'bottle', 'label']
+        const loaded: Partial<Scores> = {}
+        for (const k of keys) {
+          const v = Number(raw[k])
+          if (v > 0) loaded[k] = v
+        }
+        setScores(Object.keys(loaded).length > 0 ? loaded : { ...EMPTY })
         setPriceTier((data.price_tier_override ?? '') as PriceTier | '')
         setNotes(data.tasting_notes ?? '')
         setLoading(false)

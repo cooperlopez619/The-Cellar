@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../hooks/useAuth'
-import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
+import { WHISKEY_TYPES, PRICE_TIERS, calcMasterScore, type Scores } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import CellarLogo from '../components/ui/CellarLogo'
 import HelpButton from '../components/ui/HelpButton'
@@ -117,13 +117,14 @@ export default function CatalogPage() {
 
       if (all.length) {
         const { data: pours } = await supabase
-          .from('pours').select('whiskey_id, master_score, bfb_score')
+          .from('pours').select('whiskey_id, master_score, bfb_score, scores')
           .in('whiskey_id', all.map(w => w.id))
         const map: Record<string, { s: number[]; b: number[] }> = {}
         for (const p of pours ?? []) {
           if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
-          if (p.master_score) map[p.whiskey_id].s.push(p.master_score)
-          if (p.bfb_score)   map[p.whiskey_id].b.push(p.bfb_score)
+          const s = p.master_score ?? calcMasterScore((p.scores ?? {}) as Partial<Scores>)
+          if (s) map[p.whiskey_id].s.push(s)
+          if (p.bfb_score) map[p.whiskey_id].b.push(p.bfb_score)
         }
         const out: Stats = {}
         for (const [id, { s, b }] of Object.entries(map)) {
