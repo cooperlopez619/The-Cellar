@@ -1,5 +1,13 @@
 import type { WhiskeyType, PriceTier, Scores } from './scoring'
 
+export interface Profile {
+  id:            string
+  username:      string | null
+  display_name:  string | null
+  tutorial_done: boolean
+  created_at:    string
+}
+
 export interface Whiskey {
   id:          string
   name:        string
@@ -57,6 +65,12 @@ export type Database = {
         Row:           UserList
         Insert:        Omit<UserList, 'id' | 'created_at'>
         Update:        Partial<UserList>
+        Relationships: []
+      }
+      profiles: {
+        Row:           Profile
+        Insert:        Omit<Profile, 'created_at'>
+        Update:        Partial<Profile>
         Relationships: []
       }
     }

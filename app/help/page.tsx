@@ -1,7 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-
-const STORAGE_KEY = 'cellar_tutorial_done'
+import { createClient } from '@/lib/supabase/client'
 
 const SECTIONS = [
   {
@@ -84,8 +83,12 @@ const SECTIONS = [
 export default function HelpPage() {
   const router = useRouter()
 
-  function replayTutorial() {
-    localStorage.removeItem(STORAGE_KEY)
+  async function replayTutorial() {
+    const sb   = createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    if (user) {
+      await sb.from('profiles').upsert({ id: user.id, tutorial_done: false }, { onConflict: 'id' })
+    }
     router.push('/')
   }
 

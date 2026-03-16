@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '../../hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
 
-const STORAGE_KEY = 'cellar_tutorial_done'
 const PAD = 10 // padding around highlighted element
 
 const STEPS = [
@@ -60,6 +60,13 @@ const STEPS = [
 // Index of the Favorites & Wishlist step
 const FAVORITES_STEP = 3
 
+async function markTutorialDone(userId: string) {
+  const sb = createClient()
+  await sb
+    .from('profiles')
+    .upsert({ id: userId, tutorial_done: true }, { onConflict: 'id' })
+}
+
 export default function TutorialOverlay() {
   const { user, loading } = useAuth()
   const router   = useRouter()
@@ -71,11 +78,19 @@ export default function TutorialOverlay() {
   const [rect, setRect]           = useState<DOMRect | null>(null)
   const findTimerRef              = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Show on first sign-in
+  // Show on first sign-in — check profiles table
   useEffect(() => {
     if (loading || !user) return
     if (pathname?.startsWith('/auth')) return
-    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
+
+    const sb = createClient()
+    sb.from('profiles')
+      .select('tutorial_done')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data?.tutorial_done) setVisible(true)
+      })
   }, [loading, user, pathname])
 
   // Find and highlight the target element when step/page changes
@@ -119,7 +134,7 @@ export default function TutorialOverlay() {
   }, [step, visible])
 
   function dismiss() {
-    localStorage.setItem(STORAGE_KEY, '1')
+    if (user) markTutorialDone(user.id)
     setRect(null)
     setVisible(false)
   }
@@ -146,7 +161,6 @@ export default function TutorialOverlay() {
   const isLast   = step === STEPS.length - 1
 
   // For the favorites step, calculate arrow position pointing at the icon column
-  // Icons are in the rightmost ~44px of the card
   const showIconArrow = step === FAVORITES_STEP && rect !== null
 
   return (
