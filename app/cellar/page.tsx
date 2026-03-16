@@ -137,7 +137,7 @@ export default function MyCellarPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-cellar-surface border border-cellar-border rounded-xl p-1 mb-4">
+      <div className="flex bg-cellar-surface border border-cellar-border rounded-xl p-1 mb-4" data-tutorial="cellar-tabs">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${

@@ -59,6 +59,7 @@ function WhiskeySearch({ onSelect }: { onSelect: (w: Whiskey) => void }) {
         onFocus={() => query && setOpen(true)}
         placeholder="Search whiskeys & distilleries…"
         className="input w-full"
+        data-tutorial="log-search"
       />
       {open && query.trim() && (
         <div className="absolute top-full mt-1 left-0 right-0 z-30 bg-cellar-surface border border-cellar-border rounded-xl overflow-hidden shadow-xl max-h-64 overflow-y-auto">

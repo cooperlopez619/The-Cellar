@@ -97,7 +97,7 @@ export default function ProfilePage() {
       {pourCount !== null && (() => {
         const { current, next, progress } = getRank(pourCount)
         return (
-          <div className="card p-5">
+          <div className="card p-5" data-tutorial="profile-rank">
             <p className="text-cellar-muted text-xs uppercase tracking-wide mb-1">Rank</p>
             <p className="font-serif text-cellar-amber text-xl font-semibold mb-3">{current.title}</p>
             {next ? (

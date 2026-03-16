@@ -176,10 +176,11 @@ export default function CatalogPage() {
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input type="search" placeholder="Search whiskeys & distilleries…"
-          value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
+          value={search} onChange={e => setSearch(e.target.value)} className="input pl-9"
+          data-tutorial="catalog-search" />
       </div>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4" data-tutorial="catalog-filters">
         <FilterDropdown value={typeFilter} onChange={setType} options={WHISKEY_TYPES} placeholder="All Types" />
         <FilterDropdown value={tierFilter} onChange={setTier} options={PRICE_TIERS} placeholder="All Prices" />
       </div>
@@ -194,7 +195,7 @@ export default function CatalogPage() {
           <Link href="/log" className="btn-primary inline-block mt-4">Add a Bottle</Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" data-tutorial="whiskey-cards">
           {filtered.map(w => (
             <WhiskeyCard key={w.id} whiskey={w}
               communityScore={stats[w.id]?.avgScore ?? 0}
