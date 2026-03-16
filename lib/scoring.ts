@@ -47,14 +47,14 @@ export function calcBFB(masterScore: number, priceTier: PriceTier): number {
 }
 
 export function bfbBgColor(bfb: number): string {
-  if (bfb >= 8) return 'bg-cellar-green/20 text-cellar-green border-cellar-green/30'
-  if (bfb >= 5) return 'bg-cellar-amber/20 text-cellar-amber border-cellar-amber/30'
+  if (bfb >= 7) return 'bg-cellar-green/20 text-cellar-green border-cellar-green/30'
+  if (bfb >= 4.5) return 'bg-cellar-amber/20 text-cellar-amber border-cellar-amber/30'
   return 'bg-cellar-red/20 text-cellar-red border-cellar-red/30'
 }
 
 export function bfbLabel(bfb: number): string {
-  if (bfb >= 8) return 'Great Value'
-  if (bfb >= 5) return 'Fair Value'
+  if (bfb >= 7) return 'Great Value'
+  if (bfb >= 4.5) return 'Fair Value'
   return 'Pricey'
 }
 
