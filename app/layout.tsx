@@ -13,6 +13,8 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter     = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const playfair  = Cormorant_Garamond({ subsets: ['latin'], variable: '--font-playfair', weight: ['300','400','600','700'] })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'The Cellar',
   description: 'Your personal whiskey journal & discovery app',
