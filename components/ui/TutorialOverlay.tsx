@@ -11,56 +11,48 @@ const STEPS = [
     page: null,
     title: 'Welcome to The Cellar',
     description: 'Your personal whiskey journal. Let\'s take a quick tour so you know your way around.',
-    emoji: '🥃',
     selector: null,
   },
   {
     page: '/',
     title: 'Search & Discover',
     description: 'Use the search bar to find any whiskey or distillery by name.',
-    emoji: '🔍',
     selector: '[data-tutorial="catalog-search"]',
   },
   {
     page: '/',
     title: 'Filter by Type & Price',
     description: 'Narrow down the catalog by whiskey type or price range using these dropdowns.',
-    emoji: '🔽',
     selector: '[data-tutorial="catalog-filters"]',
   },
   {
     page: '/',
     title: 'Favorites & Wishlist',
-    description: 'Tap ★ on any whiskey card to save it to Favorites. Tap the bookmark icon to add it to your Wishlist.',
-    emoji: '★',
+    description: 'Tap the star on any whiskey card to save it to Favorites. Tap the bookmark to add it to your Wishlist.',
     selector: '[data-tutorial="whiskey-cards"]',
   },
   {
     page: '/log',
     title: 'Log a Pour',
     description: 'Search for a whiskey, score it on taste and appearance, add tasting notes, and snap a bottle photo.',
-    emoji: '📝',
     selector: '[data-tutorial="log-search"]',
   },
   {
     page: '/cellar',
     title: 'My Cellar',
     description: 'All your pours, favorites, and wishlisted bottles live here. Switch between tabs to explore.',
-    emoji: '📚',
     selector: '[data-tutorial="cellar-tabs"]',
   },
   {
     page: '/profile',
     title: 'Your Profile & Rank',
-    description: 'Track your pours and unlock new ranks as your collection grows. Tap the gear ⚙ to update your name, location, and photo.',
-    emoji: '👤',
+    description: 'Track your pours and unlock new ranks as your collection grows. Tap the gear to update your name, location, and photo.',
     selector: '[data-tutorial="profile-rank"]',
   },
   {
     page: null,
     title: "You're all set!",
-    description: 'Start exploring, logging, and building your whiskey collection. Cheers! 🥃',
-    emoji: '🎉',
+    description: 'Start exploring, logging, and building your whiskey collection. Cheers!',
     selector: null,
   },
 ]
@@ -230,16 +222,13 @@ export default function TutorialOverlay() {
           </div>
 
           {/* Content */}
-          <div className="flex items-start gap-4 mb-6">
-            <span className="text-3xl leading-none mt-0.5">{current.emoji}</span>
-            <div>
-              <h2 className="font-serif text-cellar-cream text-lg font-semibold mb-1">
-                {current.title}
-              </h2>
-              <p className="text-cellar-muted text-sm leading-relaxed">
-                {current.description}
-              </p>
-            </div>
+          <div className="mb-6">
+            <h2 className="font-serif text-cellar-cream text-lg font-semibold mb-1">
+              {current.title}
+            </h2>
+            <p className="text-cellar-muted text-sm leading-relaxed">
+              {current.description}
+            </p>
           </div>
 
           {/* Footer */}

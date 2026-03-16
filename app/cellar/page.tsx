@@ -121,7 +121,7 @@ export default function MyCellarPage() {
 
   return (
     <div className="page">
-      <h1 className="font-serif text-cellar-cream text-2xl font-bold mb-5 text-center">My Cellar</h1>
+      <h1 className="font-serif text-cellar-cream text-2xl font-bold mb-5">My Cellar</h1>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
