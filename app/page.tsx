@@ -118,6 +118,7 @@ export default function CatalogPage() {
       if (all.length) {
         const { data: pours } = await supabase
           .from('pours').select('whiskey_id, master_score, bfb_score, scores')
+          .eq('user_id', user!.id)
           .in('whiskey_id', all.map(w => w.id))
         const map: Record<string, { s: number[]; b: number[] }> = {}
         for (const p of pours ?? []) {
