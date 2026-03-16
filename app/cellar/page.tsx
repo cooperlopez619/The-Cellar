@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getSupabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import ScoreRing from '../../components/ui/ScoreRing'
 import SubScoreBar from '../../components/ui/SubScoreBar'
@@ -11,6 +10,7 @@ import BFBBadge from '../../components/ui/BFBBadge'
 import BottomNav from '../../components/ui/BottomNav'
 import { UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, WHISKEY_TYPES, type WhiskeyType } from '../../lib/scoring'
 import type { Pour } from '../../lib/database.types'
+import { createClient } from '@/lib/supabase/client'
 
 export default function MyCellarPage() {
   const { user, loading: authLoading } = useAuth()
@@ -26,7 +26,7 @@ export default function MyCellarPage() {
 
   useEffect(() => {
     if (!user) return
-    getSupabase()
+    createClient()
       .from('pours').select('*, whiskeys(*)')
       .eq('user_id', user.id)
       .order('master_score', { ascending: false })

@@ -1,30 +1,46 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getSupabase } from '../../../lib/supabase'
 import { useAuth } from '../../../hooks/useAuth'
 import ScoreSlider from '../../../components/whiskey/ScoreSlider'
 import ScoreRing from '../../../components/ui/ScoreRing'
 import BFBBadge from '../../../components/ui/BFBBadge'
 import TagPill from '../../../components/ui/TagPill'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxCollection,
+} from '../../../components/ui/combobox'
 import BottomNav from '../../../components/ui/BottomNav'
 import {
   UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, PRICE_TIERS,
   calcMasterScore, calcBFB, type WhiskeyType, type PriceTier, type Scores,
 } from '../../../lib/scoring'
 import type { Whiskey } from '../../../lib/database.types'
+import { createClient } from '@/lib/supabase/client'
 
 const EMPTY: Partial<Scores> = { nose:0, palate:0, finish:0, type_score_1:0, type_score_2:0 }
 
-export default function LogPourPage() {
+export default function Page() {
+  return (
+    <Suspense>
+      <LogPourPage />
+    </Suspense>
+  )
+}
+
+function LogPourPage() {
   const params   = useParams<{ whiskey_id?: string[] }>()
   const prefillId = params.whiskey_id?.[0] ?? ''
   const router   = useRouter()
   const { user, loading: authLoading } = useAuth()
 
   const [whiskeys, setWhiskeys]   = useState<Whiskey[]>([])
-  const [selectedId, setSelectedId] = useState(prefillId)
-  const [selected, setSelected]   = useState<Whiskey | null>(null)
+  const [selectedWhiskey, setSelectedWhiskey] = useState<Whiskey | null>(null)
   const [scores, setScores]       = useState<Partial<Scores>>({ ...EMPTY })
   const [priceTier, setPriceTier] = useState<PriceTier | ''>('')
   const [notes, setNotes]         = useState('')
@@ -37,20 +53,18 @@ export default function LogPourPage() {
 
   useEffect(() => {
     if (!user) return
-    getSupabase().from('whiskeys').select('*').order('name').then(({ data }) => {
+    createClient().from('whiskeys').select('*').order('name').then(({ data }) => {
       setWhiskeys(data ?? [])
       if (prefillId) {
         const w = data?.find(w => w.id === prefillId)
-        if (w) { setSelected(w); setPriceTier(w.price_tier ?? '') }
+        if (w) { setSelectedWhiskey(w); setPriceTier(w.price_tier ?? '') }
       }
     })
   }, [user])
 
-  function pickWhiskey(id: string) {
-    setSelectedId(id)
-    const w = whiskeys.find(w => w.id === id) ?? null
-    setSelected(w)
-    setPriceTier(w?.price_tier ?? '')
+  function handleWhiskeyChange(whiskey: Whiskey | null) {
+    setSelectedWhiskey(whiskey)
+    setPriceTier(whiskey?.price_tier ?? '')
     setScores({ ...EMPTY })
   }
 
@@ -59,16 +73,16 @@ export default function LogPourPage() {
   }
 
   const masterScore = calcMasterScore(scores)
-  const tier        = (priceTier || selected?.price_tier) as PriceTier | undefined
+  const tier        = (priceTier || selectedWhiskey?.price_tier) as PriceTier | undefined
   const bfbScore    = tier ? calcBFB(masterScore, tier) : 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedId)  { setError('Select a whiskey first'); return }
+    if (!selectedWhiskey)  { setError('Select a whiskey first'); return }
     if (!priceTier)   { setError('Select a price tier'); return }
     setSaving(true); setError('')
-    const { error: err } = await getSupabase().from('pours').insert({
-      user_id: user!.id, whiskey_id: selectedId,
+    const { error: err } = await createClient().from('pours').insert({
+      user_id: user!.id, whiskey_id: selectedWhiskey.id,
       scores, master_score: masterScore, bfb_score: bfbScore,
       tasting_notes: notes || null,
       price_tier_override: priceTier as PriceTier,
@@ -78,7 +92,7 @@ export default function LogPourPage() {
     router.push('/cellar')
   }
 
-  const typeScoreDefs = selected ? (TYPE_SUBSCORES[selected.type as WhiskeyType] ?? []) : []
+  const typeScoreDefs = selectedWhiskey ? (TYPE_SUBSCORES[selectedWhiskey.type as WhiskeyType] ?? []) : []
 
   if (authLoading) return (
     <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
@@ -99,23 +113,42 @@ export default function LogPourPage() {
         {/* Whiskey */}
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">Whiskey</label>
-          {selected ? (
+          {selectedWhiskey ? (
             <div className="card p-3 flex items-center justify-between">
               <div>
-                <p className="text-cellar-cream font-medium text-sm">{selected.name}</p>
-                <p className="text-cellar-muted text-xs">{selected.distillery}</p>
+                <p className="text-cellar-cream font-medium text-sm">{selectedWhiskey.name}</p>
+                <p className="text-cellar-muted text-xs">{selectedWhiskey.distillery}</p>
               </div>
               <div className="flex items-center gap-2">
-                <TagPill label={selected.type} variant="type" />
-                <button type="button" onClick={() => { setSelected(null); setSelectedId('') }}
+                <TagPill label={selectedWhiskey.type} variant="type" />
+                <button type="button" onClick={() => { setSelectedWhiskey(null); }}
                   className="text-cellar-muted text-xs underline">change</button>
               </div>
             </div>
           ) : (
-            <select value={selectedId} onChange={e => pickWhiskey(e.target.value)} className="input" required>
-              <option value="">Select a whiskey…</option>
-              {whiskeys.map(w => <option key={w.id} value={w.id}>{w.name} — {w.distillery}</option>)}
-            </select>
+            <Combobox value={selectedWhiskey} onValueChange={handleWhiskeyChange} items={whiskeys}>
+              <ComboboxInput
+                placeholder="Select a whiskey…"
+                showClear
+                showTrigger
+                className="input"
+              />
+              <ComboboxContent className="bg-cellar-card">
+                <ComboboxList>
+                  <ComboboxCollection>
+                    {(item, index) => (
+                      <ComboboxItem key={item.id} value={item}>
+                        <div className="flex flex-col">
+                          <span className="text-cellar-cream text-sm">{item.name}</span>
+                          <span className="text-cellar-muted text-xs">{item.distillery}</span>
+                        </div>
+                      </ComboboxItem>
+                    )}
+                  </ComboboxCollection>
+                  <ComboboxEmpty>No whiskeys found.</ComboboxEmpty>
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
           )}
         </div>
 
@@ -134,7 +167,7 @@ export default function LogPourPage() {
         </div>
 
         {/* Scores */}
-        {selected && (
+        {selectedWhiskey && (
           <div className="card p-5 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="section-title">Your Scores</h2>
@@ -149,7 +182,7 @@ export default function LogPourPage() {
             ))}
             {typeScoreDefs.length > 0 && (
               <div className="border-t border-cellar-border pt-4">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-4">{selected.type}-specific</p>
+                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-4">{selectedWhiskey.type}-specific</p>
                 {typeScoreDefs.map((s, i) => (
                   <div key={s.key} className="mb-5 last:mb-0">
                     <ScoreSlider label={s.label} scoreKey={`type_score_${i+1}`}

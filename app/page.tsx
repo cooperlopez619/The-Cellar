@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../hooks/useAuth'
-import { getSupabase } from '../lib/supabase'
 import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import BottomNav from '../components/ui/BottomNav'
 import type { Whiskey } from '../lib/database.types'
+import { createClient } from '@/lib/supabase/client'
 
 type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
@@ -27,7 +27,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     if (!user) return
-    const supabase = getSupabase()
+    const supabase = createClient()
     async function load() {
       const { data } = await supabase.from('whiskeys').select('*').order('name')
       setWhiskeys(data ?? [])

@@ -1,8 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getSupabase } from '../../../lib/supabase'
 import { useAuth } from '../../../hooks/useAuth'
 import ScoreRing from '../../../components/ui/ScoreRing'
 import SubScoreBar from '../../../components/ui/SubScoreBar'
@@ -11,8 +10,17 @@ import BFBBadge from '../../../components/ui/BFBBadge'
 import BottomNav from '../../../components/ui/BottomNav'
 import { PRICE_TIER_RANGE, UNIVERSAL_SUBSCORES, TYPE_SUBSCORES, type WhiskeyType } from '../../../lib/scoring'
 import type { Whiskey, Pour } from '../../../lib/database.types'
+import { createClient } from '@/lib/supabase/client'
 
-export default function WhiskeyDetailPage() {
+export default function Page() {
+  return (
+    <Suspense>
+      <WhiskeyDetailPage />
+    </Suspense>
+  )
+}
+
+function WhiskeyDetailPage() {
   const { id }    = useParams<{ id: string }>()
   const router    = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -26,7 +34,7 @@ export default function WhiskeyDetailPage() {
 
   useEffect(() => {
     if (!user) return
-    const sb = getSupabase()
+    const sb = createClient()
     Promise.all([
       sb.from('whiskeys').select('*').eq('id', id).single(),
       sb.from('pours').select('*').eq('whiskey_id', id),
