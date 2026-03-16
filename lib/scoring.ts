@@ -47,9 +47,9 @@ export function calcBFB(masterScore: number, priceTier: PriceTier): number {
 }
 
 export function bfbBgColor(bfb: number): string {
-  if (bfb >= 7) return 'bg-cellar-green/20 text-cellar-green border-cellar-green/30'
-  if (bfb >= 4.5) return 'bg-cellar-amber/20 text-cellar-amber border-cellar-amber/30'
-  return 'bg-cellar-red/20 text-cellar-red border-cellar-red/30'
+  if (bfb >= 7) return 'text-cellar-green border-cellar-green/40'
+  if (bfb >= 4.5) return 'text-cellar-amber border-cellar-amber/40'
+  return 'text-cellar-red border-cellar-red/40'
 }
 
 export function bfbLabel(bfb: number): string {
