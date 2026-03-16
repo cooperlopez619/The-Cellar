@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth'
 import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import CellarLogo from '../components/ui/CellarLogo'
+import HelpButton from '../components/ui/HelpButton'
 import type { Whiskey } from '../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -166,8 +167,10 @@ export default function CatalogPage() {
 
   return (
     <div className="page">
-      <div className="flex justify-center mb-5">
+      <div className="flex items-center justify-between mb-5">
+        <div className="w-8" />
         <CellarLogo size={110} />
+        <HelpButton />
       </div>
 
       <div className="relative mb-3">
@@ -195,15 +198,17 @@ export default function CatalogPage() {
           <Link href="/log" className="btn-primary inline-block mt-4">Add a Bottle</Link>
         </div>
       ) : (
-        <div className="space-y-3" data-tutorial="whiskey-cards">
-          {filtered.map(w => (
-            <WhiskeyCard key={w.id} whiskey={w}
-              communityScore={stats[w.id]?.avgScore ?? 0}
-              communityBFB={stats[w.id]?.avgBFB ?? 0}
-              isFavorite={favorites.has(w.id)}
-              isWishlist={wishlists.has(w.id)}
-              onToggleFavorite={() => toggleList(w.id, 'favorite')}
-              onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
+        <div className="space-y-3">
+          {filtered.map((w, i) => (
+            <div key={w.id} data-tutorial={i === 0 ? 'first-whiskey-card' : undefined}>
+              <WhiskeyCard whiskey={w}
+                communityScore={stats[w.id]?.avgScore ?? 0}
+                communityBFB={stats[w.id]?.avgBFB ?? 0}
+                isFavorite={favorites.has(w.id)}
+                isWishlist={wishlists.has(w.id)}
+                onToggleFavorite={() => toggleList(w.id, 'favorite')}
+                onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
+            </div>
           ))}
         </div>
       )}

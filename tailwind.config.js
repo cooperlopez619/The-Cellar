@@ -20,6 +20,15 @@ module.exports = {
           red:     '#D4563A',
         },
       },
+      keyframes: {
+        'bounce-x': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%':      { transform: 'translateX(4px)' },
+        },
+      },
+      animation: {
+        'bounce-x': 'bounce-x 0.8s ease-in-out infinite',
+      },
       fontFamily: {
         display: ['Battlesbridge', 'Georgia', 'serif'],
         serif:   ['var(--font-playfair)', 'Georgia', 'serif'],

@@ -16,9 +16,8 @@
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
   }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #0C1519; }
-  ::-webkit-scrollbar-thumb { background: #2A3A42; border-radius: 2px; }
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
   :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);

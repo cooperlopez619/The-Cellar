@@ -9,6 +9,7 @@ import TagPill from '../../components/ui/TagPill'
 import BFBBadge from '../../components/ui/BFBBadge'
 import WhiskeyCard from '../../components/whiskey/WhiskeyCard'
 import { ALL_SUBSCORES, WHISKEY_TYPES } from '../../lib/scoring'
+import HelpButton from '../../components/ui/HelpButton'
 import type { Pour, Whiskey } from '../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -121,7 +122,10 @@ export default function MyCellarPage() {
 
   return (
     <div className="page">
-      <h1 className="font-serif text-cellar-cream text-2xl font-bold mb-5">My Cellar</h1>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="font-serif text-cellar-cream text-2xl font-bold">My Cellar</h1>
+        <HelpButton />
+      </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[

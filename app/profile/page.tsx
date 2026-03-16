@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getRank } from '@/lib/ranks'
+import HelpButton from '@/components/ui/HelpButton'
 
 function GearIcon() {
   return (
@@ -56,9 +57,12 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-serif text-cellar-cream text-2xl font-bold">Profile</h1>
-        <Link href="/profile/settings" className="p-2 rounded-xl text-cellar-muted hover:text-cellar-cream transition-colors">
-          <GearIcon />
-        </Link>
+        <div className="flex items-center gap-2">
+          <HelpButton />
+          <Link href="/profile/settings" className="p-2 rounded-xl text-cellar-muted hover:text-cellar-cream transition-colors">
+            <GearIcon />
+          </Link>
+        </div>
       </div>
 
       {/* Avatar + identity */}

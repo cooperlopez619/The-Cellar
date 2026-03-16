@@ -28,8 +28,8 @@ const STEPS = [
   {
     page: '/',
     title: 'Favorites & Wishlist',
-    description: 'Tap the star on any whiskey card to save it to Favorites. Tap the bookmark to add it to your Wishlist.',
-    selector: '[data-tutorial="whiskey-cards"]',
+    description: 'Tap the star to save a whiskey to Favorites. Tap the bookmark to add it to your Wishlist.',
+    selector: '[data-tutorial="first-whiskey-card"]',
   },
   {
     page: '/log',
@@ -56,6 +56,9 @@ const STEPS = [
     selector: null,
   },
 ]
+
+// Index of the Favorites & Wishlist step
+const FAVORITES_STEP = 3
 
 export default function TutorialOverlay() {
   const { user, loading } = useAuth()
@@ -142,8 +145,9 @@ export default function TutorialOverlay() {
   const current  = STEPS[step]
   const isLast   = step === STEPS.length - 1
 
-  // Position card at bottom if element is in top half, else at top
-  const cardAtBottom = !rect || (rect.top + rect.height / 2) < window.innerHeight * 0.55
+  // For the favorites step, calculate arrow position pointing at the icon column
+  // Icons are in the rightmost ~44px of the card
+  const showIconArrow = step === FAVORITES_STEP && rect !== null
 
   return (
     <div className="fixed inset-0 z-50">
@@ -193,11 +197,50 @@ export default function TutorialOverlay() {
         />
       )}
 
+      {/* Icon arrow callouts for Favorites & Wishlist step — aligned with each icon */}
+      {showIconArrow && rect && (
+        <>
+          {/* Favorite label — aligned with star icon (~28px below card top) */}
+          <div
+            className="absolute pointer-events-none flex items-center gap-1.5"
+            style={{
+              top:       rect.top + 28,
+              right:     window.innerWidth - rect.right + 45,
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <span className="text-cellar-amber text-xs font-semibold bg-cellar-bg/90 border border-cellar-amber/40 rounded-full px-2.5 py-1 whitespace-nowrap">
+              Favorite
+            </span>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" className="text-cellar-amber animate-bounce-x shrink-0">
+              <path d="M1 6h11M9 2l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Wishlist label — aligned with bookmark icon (~53px below card top) */}
+          <div
+            className="absolute pointer-events-none flex items-center gap-1.5"
+            style={{
+              top:       rect.top + 53,
+              right:     window.innerWidth - rect.right + 45,
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <span className="text-cellar-amber text-xs font-semibold bg-cellar-bg/90 border border-cellar-amber/40 rounded-full px-2.5 py-1 whitespace-nowrap">
+              Wishlist
+            </span>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" className="text-cellar-amber animate-bounce-x shrink-0">
+              <path d="M1 6h11M9 2l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </>
+      )}
+
       {/* Tutorial card */}
       <div
-        className={`absolute left-0 right-0 pointer-events-auto transition-opacity duration-150 ${animating ? 'opacity-0' : 'opacity-100'} ${cardAtBottom ? 'bottom-0' : 'top-0'}`}
+        className={`absolute left-0 right-0 bottom-0 pointer-events-auto transition-opacity duration-150 ${animating ? 'opacity-0' : 'opacity-100'}`}
       >
-        <div className={`bg-cellar-surface border-cellar-border px-6 pt-5 pb-8 ${cardAtBottom ? 'border-t rounded-t-2xl' : 'border-b rounded-b-2xl'}`}>
+        <div className="bg-cellar-surface border-t border-cellar-border px-6 pt-5 pb-8 rounded-t-2xl">
 
           {/* Skip */}
           <button

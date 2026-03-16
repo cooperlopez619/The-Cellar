@@ -12,6 +12,7 @@ import {
 } from '../../../lib/scoring'
 import type { Whiskey } from '../../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
+import HelpButton from '@/components/ui/HelpButton'
 
 const EMPTY: Partial<Scores> = { nose: 0, palate: 0, finish: 0, bottle: 0, label: 0 }
 
@@ -228,6 +229,7 @@ function LogPourPage() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <h1 className="font-serif text-cellar-cream text-xl font-semibold">Log a Pour</h1>
+        <div className="ml-auto"><HelpButton /></div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
