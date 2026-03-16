@@ -321,7 +321,7 @@ function LogPourPage() {
                     <div className="h-[52px] flex items-center justify-center">
                       <BFBBadge score={bfbScore} />
                     </div>
-                    <span className="text-cellar-muted text-xs text-center">BFB</span>
+                    <span className="text-cellar-muted text-xs text-center">Bang for Buck</span>
                   </div>
                 )}
               </div>
