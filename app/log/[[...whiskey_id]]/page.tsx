@@ -347,13 +347,19 @@ function LogPourPage() {
           </div>
         )}
 
-        {/* Tasting notes */}
+        {/* Comments */}
         <div>
-          <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">
-            Tasting Notes <span className="normal-case">(optional)</span>
-          </label>
-          <textarea rows={3} placeholder="Notes on the nose, palate, finish…"
-            value={notes} onChange={e => setNotes(e.target.value)} className="input resize-none" />
+          <div className="flex items-baseline justify-between mb-2">
+            <label className="text-cellar-muted text-xs uppercase tracking-wide">
+              Comments <span className="normal-case">(optional)</span>
+            </label>
+            <span className={`text-xs ${notes.length > 450 ? 'text-cellar-red' : 'text-cellar-muted'}`}>
+              {notes.length}/500
+            </span>
+          </div>
+          <textarea rows={3} placeholder="Share your thoughts on this pour…"
+            value={notes} onChange={e => setNotes(e.target.value.slice(0, 500))}
+            className="input resize-none" />
         </div>
 
         {/* Bottle photo */}

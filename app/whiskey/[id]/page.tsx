@@ -114,17 +114,20 @@ function WhiskeyDetailPage() {
         </div>
       )}
 
-      {/* Tasting notes */}
+      {/* Comments */}
       {pours.some(p => p.tasting_notes) && (
         <div className="card p-5 mb-4">
-          <h2 className="section-title mb-3">Tasting Notes</h2>
-          <div className="space-y-3">
-            {pours.filter(p => p.tasting_notes).slice(0, 5).map(p => (
+          <h2 className="section-title mb-3">Comments</h2>
+          <div className="space-y-4">
+            {pours.filter(p => p.tasting_notes).map(p => (
               <div key={p.id} className="border-l-2 border-cellar-amber/40 pl-3">
-                <p className="text-cellar-cream text-sm italic">&ldquo;{p.tasting_notes}&rdquo;</p>
-                <p className="text-cellar-muted text-xs mt-1">
-                  Score {p.master_score?.toFixed(1) ?? '—'} · {new Date(p.created_at).toLocaleDateString()}
-                </p>
+                <p className="text-cellar-cream text-sm leading-relaxed">&ldquo;{p.tasting_notes}&rdquo;</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <ScoreRing score={p.master_score ?? 0} size={28} strokeWidth={3} />
+                  <span className="text-cellar-muted text-xs">
+                    {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
