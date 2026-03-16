@@ -108,7 +108,7 @@ export default function CatalogPage() {
 
       // Load user lists
       const { data: lists } = await supabase
-        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user.id)
+        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
       if (lists) {
         setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
         setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
