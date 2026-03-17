@@ -43,6 +43,23 @@ export interface UserList {
   created_at:  string
 }
 
+export interface Friendship {
+  id:           string
+  requester_id: string
+  addressee_id: string
+  status:       'pending' | 'accepted'
+  created_at:   string
+}
+
+export interface UserStat {
+  id:             string
+  display_name:   string | null
+  username:       string | null
+  pour_count:     number
+  fav_type:       string | null
+  avg_price_tier: number | null
+}
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 type EmptyRecord = {}
 
@@ -71,6 +88,12 @@ export type Database = {
         Row:           Profile
         Insert:        Omit<Profile, 'created_at'>
         Update:        Partial<Profile>
+        Relationships: []
+      }
+      friendships: {
+        Row:           Friendship
+        Insert:        Omit<Friendship, 'id' | 'created_at'>
+        Update:        Partial<Friendship>
         Relationships: []
       }
     }

@@ -1,153 +1,431 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getRank } from '@/lib/ranks'
-import HelpButton from '@/components/ui/HelpButton'
 
-function GearIcon() {
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const PRICE_TIER_VALUE: Record<string, number> = {
+  '$': 1, '$$': 2, '$$$': 3, '$$$$': 4, '$$$$$': 5,
+}
+
+function getPricingRating(avg: number | null): string | null {
+  if (avg === null) return null
+  if (avg < 1.5) return 'Budget Sipper'
+  if (avg < 2.5) return 'Value Hunter'
+  if (avg < 3.5) return 'Premium Palate'
+  if (avg < 4.5) return 'High Roller'
+  return 'Unicorn Chaser'
+}
+
+function getInitials(name: string | null): string {
+  if (!name) return '?'
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
+
+// Seed-based colour from user id for avatar fallback
+const AVATAR_COLOURS = [
+  'bg-amber-700', 'bg-orange-700', 'bg-yellow-700',
+  'bg-teal-700',  'bg-emerald-700', 'bg-violet-700',
+  'bg-rose-700',  'bg-slate-600',
+]
+function avatarColour(id: string) {
+  const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return AVATAR_COLOURS[n % AVATAR_COLOURS.length]
+}
+
+// ─── types ───────────────────────────────────────────────────────────────────
+
+interface UserStat {
+  id:             string
+  display_name:   string | null
+  username:       string | null
+  pour_count:     number
+  fav_type:       string | null
+  avg_price_tier: number | null
+}
+
+interface Friendship {
+  id:           string
+  requester_id: string
+  addressee_id: string
+  status:       'pending' | 'accepted'
+}
+
+// ─── sub-components ──────────────────────────────────────────────────────────
+
+function Avatar({ name, colour, size = 'md' }: { name: string | null; colour: string; size?: 'sm' | 'md' }) {
+  const sz = size === 'sm' ? 'w-9 h-9 text-sm' : 'w-11 h-11 text-base'
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
+    <div className={`${sz} ${colour} rounded-full flex items-center justify-center font-semibold text-white shrink-0`}>
+      {getInitials(name)}
+    </div>
   )
 }
 
-function PinIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-    </svg>
-  )
+function Medal({ rank }: { rank: number }) {
+  if (rank === 1) return <span className="text-lg">🥇</span>
+  if (rank === 2) return <span className="text-lg">🥈</span>
+  if (rank === 3) return <span className="text-lg">🥉</span>
+  return <span className="text-cellar-muted text-sm font-semibold w-6 text-center">#{rank}</span>
 }
 
-export default function ProfilePage() {
-  const { user, loading } = useAuth()
+// ─── main page ───────────────────────────────────────────────────────────────
+
+export default function SocialPage() {
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [pourCount,   setPourCount]   = useState<number | null>(null)
-  const [favType,     setFavType]     = useState<string | null>(null)
+
+  // My stats
+  const [myStats,  setMyStats]  = useState<UserStat | null>(null)
+  const [myAvatar, setMyAvatar] = useState<string | null>(null)
+
+  // Friendships
+  const [friends,   setFriends]   = useState<UserStat[]>([])
+  const [pending,   setPending]   = useState<UserStat[]>([])   // requests I received
+  const [sent,      setSent]      = useState<string[]>([])      // addressee IDs I've requested
+  const [friendIds, setFriendIds] = useState<Record<string, Friendship>>({}) // all raw rows
+
+  // Add-friend search
+  const [query,       setQuery]       = useState('')
+  const [results,     setResults]     = useState<UserStat[]>([])
+  const [searching,   setSearching]   = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/auth')
-  }, [user, loading])
+    if (!authLoading && !user) router.replace('/auth')
+  }, [user, authLoading])
 
   useEffect(() => {
     if (!user) return
-    const sb = createClient()
-
-    // Total pour count
-    sb.from('pours')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .then(({ count }) => setPourCount(count ?? 0))
-
-    // Favorite type from pour history
-    sb.from('pours')
-      .select('whiskeys(type)')
-      .eq('user_id', user.id)
-      .then(({ data }) => {
-        if (!data?.length) return
-        const counts: Record<string, number> = {}
-        data.forEach((p: any) => {
-          const t = p.whiskeys?.type
-          if (t) counts[t] = (counts[t] ?? 0) + 1
-        })
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-        if (top) setFavType(top[0])
-      })
+    setMyAvatar(user.user_metadata?.avatar_url ?? null)
+    loadAll()
   }, [user])
 
-  if (loading || !user) return (
+  async function loadAll() {
+    if (!user) return
+    const sb = createClient()
+
+    // Fetch my stats row
+    const { data: me } = await sb
+      .from('user_stats')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+    setMyStats(me ?? null)
+
+    // Fetch all my friendship rows
+    const { data: fs } = await sb
+      .from('friendships')
+      .select('*')
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+
+    const rows = (fs ?? []) as Friendship[]
+
+    // IDs of accepted friends + pending receivers
+    const acceptedIds: string[] = []
+    const pendingIds:  string[] = []  // people who sent ME a request
+    const sentIds:     string[] = []  // people I sent a request to (not yet accepted)
+    const rawMap: Record<string, Friendship> = {}
+
+    rows.forEach(f => {
+      const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id
+      rawMap[otherId] = f
+      if (f.status === 'accepted') {
+        acceptedIds.push(otherId)
+      } else if (f.requester_id === user.id) {
+        sentIds.push(otherId)
+      } else {
+        pendingIds.push(otherId)
+      }
+    })
+    setFriendIds(rawMap)
+    setSent(sentIds)
+
+    // Fetch stats for all relevant users
+    const allIds = [...acceptedIds, ...pendingIds]
+    if (allIds.length) {
+      const { data: stats } = await sb
+        .from('user_stats')
+        .select('*')
+        .in('id', allIds)
+
+      const statsMap = Object.fromEntries((stats ?? []).map((s: UserStat) => [s.id, s]))
+      setFriends(acceptedIds.map(id => statsMap[id]).filter(Boolean))
+      setPending(pendingIds.map(id => statsMap[id]).filter(Boolean))
+    }
+
+    setLoadingData(false)
+  }
+
+  async function sendRequest(addresseeId: string) {
+    if (!user) return
+    const sb = createClient()
+    await sb.from('friendships').insert({ requester_id: user.id, addressee_id: addresseeId })
+    setSent(prev => [...prev, addresseeId])
+  }
+
+  async function acceptRequest(requesterId: string) {
+    if (!user) return
+    const sb = createClient()
+    const row = friendIds[requesterId]
+    if (!row) return
+    await sb.from('friendships').update({ status: 'accepted' }).eq('id', row.id)
+    // Move from pending → friends
+    const accepted = pending.find(p => p.id === requesterId)
+    if (accepted) {
+      setFriends(prev => [...prev, accepted])
+      setPending(prev => prev.filter(p => p.id !== requesterId))
+    }
+  }
+
+  async function removeFriend(otherId: string) {
+    if (!user) return
+    const sb = createClient()
+    const row = friendIds[otherId]
+    if (!row) return
+    await sb.from('friendships').delete().eq('id', row.id)
+    setFriends(prev => prev.filter(f => f.id !== otherId))
+    setSent(prev => prev.filter(id => id !== otherId))
+    setFriendIds(prev => { const n = { ...prev }; delete n[otherId]; return n })
+  }
+
+  function handleSearch(value: string) {
+    setQuery(value)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (!value.trim()) { setResults([]); return }
+    setSearching(true)
+    timerRef.current = setTimeout(async () => {
+      const sb = createClient()
+      const { data } = await sb
+        .from('user_stats')
+        .select('*')
+        .or(`display_name.ilike.%${value}%,username.ilike.%${value}%`)
+        .neq('id', user!.id)
+        .limit(10)
+      setResults((data ?? []) as UserStat[])
+      setSearching(false)
+    }, 300)
+  }
+
+  if (authLoading || !user) return (
     <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
-  const displayName = user.user_metadata?.display_name
-  const location    = user.user_metadata?.location
-  const avatarUrl   = user.user_metadata?.avatar_url
+  // Leaderboard: me + accepted friends sorted by pour_count desc
+  const leaderboard: (UserStat & { isMe?: boolean })[] = [
+    ...(myStats ? [{ ...myStats, isMe: true }] : []),
+    ...friends,
+  ].sort((a, b) => b.pour_count - a.pour_count)
+
+  const myRank = leaderboard.findIndex(u => u.isMe) + 1
 
   return (
-    <div className="page">
+    <div className="page space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-serif text-cellar-cream text-2xl font-bold">Profile</h1>
-        <div className="flex items-center gap-2">
-          <HelpButton />
-          <Link href="/profile/settings" className="p-2 rounded-xl text-cellar-muted hover:text-cellar-cream transition-colors">
-            <GearIcon />
-          </Link>
-        </div>
-      </div>
+      <h1 className="font-serif text-cellar-cream text-2xl font-bold">Social</h1>
 
-      {/* Avatar + identity */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden mb-3">
-          {avatarUrl ? (
+      {/* ── My Profile Card ─────────────────────────────────────────────── */}
+      <Link href="/profile/me" className="card p-4 flex items-center gap-4 active:opacity-80 transition-opacity block">
+        <div className="w-14 h-14 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden shrink-0">
+          {myAvatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+            <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl">🥃</div>
+            <div className="w-full h-full flex items-center justify-center text-2xl">🥃</div>
           )}
         </div>
-        <p className="font-serif text-cellar-cream text-xl font-semibold">
-          {displayName || 'Whiskey Enthusiast'}
-        </p>
-        {location && (
-          <div className="flex items-center gap-1 text-cellar-muted text-sm mt-1">
-            <PinIcon />
-            <span>{location}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-cellar-cream font-semibold text-base truncate">
+            {user.user_metadata?.display_name || 'Whiskey Enthusiast'}
+          </p>
+          {myStats && (
+            <p className="text-cellar-amber text-xs font-medium mt-0.5">
+              {getRank(myStats.pour_count).current.title}
+              {myRank > 0 && friends.length > 0 && (
+                <span className="text-cellar-muted font-normal"> · #{myRank} on leaderboard</span>
+              )}
+            </p>
+          )}
+          <div className="flex items-center gap-3 mt-1.5">
+            <span className="text-cellar-muted text-xs">{myStats?.pour_count ?? 0} pours</span>
+            {myStats?.fav_type && <span className="text-cellar-muted text-xs">· {myStats.fav_type}</span>}
+            {myStats && getPricingRating(myStats.avg_price_tier) && (
+              <span className="text-cellar-muted text-xs">· {getPricingRating(myStats.avg_price_tier)}</span>
+            )}
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+      </Link>
+
+      {/* ── Pending requests ────────────────────────────────────────────── */}
+      {pending.length > 0 && (
+        <div>
+          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Friend Requests</p>
+          <div className="space-y-2">
+            {pending.map(u => (
+              <div key={u.id} className="card p-3 flex items-center gap-3">
+                <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                  <p className="text-cellar-muted text-xs">{u.pour_count} pours</p>
+                </div>
+                <button
+                  onClick={() => acceptRequest(u.id)}
+                  className="rounded-full px-3 py-1 text-xs font-semibold bg-cellar-amber text-cellar-bg">
+                  Accept
+                </button>
+                <button
+                  onClick={() => removeFriend(u.id)}
+                  className="rounded-full px-3 py-1 text-xs font-semibold bg-cellar-surface border border-cellar-border text-cellar-muted">
+                  Decline
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Drinking Buddies ────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-cellar-muted text-xs uppercase tracking-wide">Drinking Buddies</p>
+          <span className="text-cellar-muted text-xs">{friends.length} {friends.length === 1 ? 'buddy' : 'buddies'}</span>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-cellar-muted" width="14" height="14"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            placeholder="Find friends by name or username…"
+            value={query}
+            onChange={e => handleSearch(e.target.value)}
+            className="input pl-8 text-sm"
+          />
+        </div>
+
+        {/* Search results */}
+        {query.trim() && (
+          <div className="card overflow-hidden mb-3">
+            {searching ? (
+              <p className="text-cellar-muted text-sm px-4 py-3">Searching…</p>
+            ) : results.length === 0 ? (
+              <p className="text-cellar-muted text-sm px-4 py-3">No users found.</p>
+            ) : (
+              results.map(u => {
+                const isFriend  = friends.some(f => f.id === u.id)
+                const isPending = pending.some(p => p.id === u.id)
+                const isSent    = sent.includes(u.id)
+                return (
+                  <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-cellar-border/40 last:border-0">
+                    <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                      <p className="text-cellar-muted text-xs">{u.pour_count} pours · {getRank(u.pour_count).current.title}</p>
+                    </div>
+                    {isFriend ? (
+                      <span className="text-cellar-muted text-xs">Friends</span>
+                    ) : isPending ? (
+                      <button onClick={() => acceptRequest(u.id)}
+                        className="rounded-full px-3 py-1 text-xs font-semibold bg-cellar-amber text-cellar-bg">Accept</button>
+                    ) : isSent ? (
+                      <span className="text-cellar-muted text-xs">Pending</span>
+                    ) : (
+                      <button onClick={() => sendRequest(u.id)}
+                        className="rounded-full px-3 py-1 text-xs font-semibold bg-cellar-surface border border-cellar-border text-cellar-cream">
+                        + Add
+                      </button>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )}
+
+        {/* Friends list */}
+        {loadingData ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : friends.length === 0 ? (
+          <div className="card p-5 text-center">
+            <p className="text-cellar-muted text-sm">No buddies yet — search above to add friends.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {friends.map(u => (
+              <div key={u.id} className="card p-3 flex items-center gap-3">
+                <Avatar name={u.display_name} colour={avatarColour(u.id)} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                  <p className="text-cellar-amber text-xs">{getRank(u.pour_count).current.title}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-cellar-muted text-xs">{u.pour_count} pours</span>
+                    {u.fav_type && <span className="text-cellar-muted text-xs">· {u.fav_type}</span>}
+                    {getPricingRating(u.avg_price_tier) && (
+                      <span className="text-cellar-muted text-xs">· {getPricingRating(u.avg_price_tier)}</span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => removeFriend(u.id)}
+                  className="text-cellar-muted hover:text-cellar-red transition-colors p-1" aria-label="Remove friend">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        {/* Pours logged */}
-        <div className="card p-5">
-          <p className="text-cellar-muted text-xs uppercase tracking-wide">Pours Logged</p>
-          <p className="text-cellar-amber font-serif font-bold text-4xl mt-1">
-            {pourCount === null ? '—' : pourCount}
-          </p>
-        </div>
-
-        {/* Favorite type */}
-        <div className="card p-5">
-          <p className="text-cellar-muted text-xs uppercase tracking-wide">Favorite Type</p>
-          <p className="text-cellar-cream font-serif font-bold text-xl mt-1 leading-tight">
-            {favType ?? (pourCount === 0 ? 'None yet' : '—')}
-          </p>
-        </div>
-      </div>
-
-      {/* Rank */}
-      {pourCount !== null && (() => {
-        const { current, next, progress } = getRank(pourCount)
-        return (
-          <div className="card p-5" data-tutorial="profile-rank">
-            <p className="text-cellar-muted text-xs uppercase tracking-wide mb-1">Rank</p>
-            <p className="font-serif text-cellar-amber text-xl font-semibold mb-3">{current.title}</p>
-            {next ? (
-              <>
-                <div className="w-full h-1.5 bg-cellar-border rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-cellar-amber rounded-full transition-all"
-                    style={{ width: `${progress * 100}%` }}
-                  />
+      {/* ── Leaderboard ─────────────────────────────────────────────────── */}
+      {leaderboard.length > 1 && (
+        <div>
+          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Leaderboard</p>
+          <div className="card overflow-hidden">
+            {leaderboard.map((u, i) => (
+              <div key={u.id}
+                className={`flex items-center gap-3 px-4 py-3 border-b border-cellar-border/40 last:border-0 ${u.isMe ? 'bg-cellar-amber/5' : ''}`}>
+                <div className="w-7 flex items-center justify-center shrink-0">
+                  <Medal rank={i + 1} />
                 </div>
-                <p className="text-cellar-muted text-xs mt-2">
-                  {next.min - pourCount} pour{next.min - pourCount !== 1 ? 's' : ''} to <span className="text-cellar-cream">{next.title}</span>
-                </p>
-              </>
-            ) : (
-              <p className="text-cellar-muted text-xs">You&apos;ve reached the highest rank.</p>
-            )}
+                {u.isMe && myAvatar ? (
+                  <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-cellar-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${u.isMe ? 'text-cellar-amber' : 'text-cellar-cream'}`}>
+                    {u.isMe ? 'You' : (u.display_name ?? u.username ?? 'Unknown')}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-cellar-muted text-xs">{u.pour_count} pours</span>
+                    {u.fav_type && <span className="text-cellar-muted text-xs">· {u.fav_type}</span>}
+                    {getPricingRating(u.avg_price_tier) && (
+                      <span className="text-cellar-muted text-xs">· {getPricingRating(u.avg_price_tier)}</span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-cellar-muted text-xs shrink-0">{getRank(u.pour_count).current.title}</span>
+              </div>
+            ))}
           </div>
-        )
-      })()}
+        </div>
+      )}
     </div>
   )
 }
