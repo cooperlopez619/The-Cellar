@@ -273,6 +273,9 @@ export default function SocialPage() {
                 {getRank(myStats.pour_count).current.title}
               </span>
             )}
+            {myStats && getPricingRating(myStats.avg_price_tier) && (
+              <span className="text-cellar-muted text-xs">· {getPricingRating(myStats.avg_price_tier)}</span>
+            )}
             {myRank > 0 && friends.length > 0 && (
               <span className="text-cellar-muted text-xs">· #{myRank}</span>
             )}
@@ -280,9 +283,6 @@ export default function SocialPage() {
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className="text-cellar-muted text-xs">{myStats?.pour_count ?? 0} pours</span>
             {myStats?.fav_type && <span className="text-cellar-muted text-xs">· {myStats.fav_type}</span>}
-            {myStats && getPricingRating(myStats.avg_price_tier) && (
-              <span className="text-cellar-muted text-xs">· {getPricingRating(myStats.avg_price_tier)}</span>
-            )}
           </div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
