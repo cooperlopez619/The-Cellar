@@ -3,6 +3,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../hooks/useAuth'
 import CellarLogo from '../../components/ui/CellarLogo'
+import Link from 'next/link'
 
 function GoogleIcon() {
   return (
@@ -41,7 +42,7 @@ function EyeIcon({ open }: { open: boolean }) {
   )
 }
 
-function PasswordInput({
+export function PasswordInput({
   placeholder, value, onChange, minLength,
 }: {
   placeholder: string
@@ -222,6 +223,10 @@ function AuthPageInner() {
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
           </button>
+
+          <Link href="/auth/forgot-password" className="block text-center text-sm text-cellar-amber hover:underline">
+            Forgot Password?
+          </Link>
         </form>
       </div>
     </div>
