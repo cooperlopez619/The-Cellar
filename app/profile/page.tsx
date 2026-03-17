@@ -261,18 +261,23 @@ export default function SocialPage() {
           <p className="text-cellar-cream font-semibold text-base truncate">
             {user.user_metadata?.display_name || 'Whiskey Enthusiast'}
           </p>
-          {myUsername && (
-            <p className="text-cellar-muted text-xs mt-0.5">@{myUsername}</p>
-          )}
-          {myStats && (
-            <p className="text-cellar-amber text-xs font-medium mt-0.5">
-              {getRank(myStats.pour_count).current.title}
-              {myRank > 0 && friends.length > 0 && (
-                <span className="text-cellar-muted font-normal"> · #{myRank} on leaderboard</span>
-              )}
-            </p>
-          )}
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {myUsername && (
+              <span className="text-cellar-muted text-xs">@{myUsername}</span>
+            )}
+            {myUsername && myStats && (
+              <span className="text-cellar-muted text-xs">·</span>
+            )}
+            {myStats && (
+              <span className="text-cellar-amber text-xs font-medium">
+                {getRank(myStats.pour_count).current.title}
+              </span>
+            )}
+            {myRank > 0 && friends.length > 0 && (
+              <span className="text-cellar-muted text-xs">· #{myRank}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className="text-cellar-muted text-xs">{myStats?.pour_count ?? 0} pours</span>
             {myStats?.fav_type && <span className="text-cellar-muted text-xs">· {myStats.fav_type}</span>}
             {myStats && getPricingRating(myStats.avg_price_tier) && (
