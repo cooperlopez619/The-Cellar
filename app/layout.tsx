@@ -5,6 +5,7 @@ import { Inter, Cormorant_Garamond, Geist } from 'next/font/google'
 import Providers from './providers'
 import BottomNav from '../components/ui/BottomNav'
 import TutorialOverlay from '../components/ui/TutorialOverlay'
+import UsernameGate from '../components/ui/UsernameGate'
 import './globals.css'
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={cn(inter.variable, playfair.variable, "font-sans", geist.variable)}>
       <body className="font-sans h-dvh overflow-hidden flex flex-col max-w-lg mx-auto">
         <Providers>
+          <Suspense><UsernameGate /></Suspense>
           <main className="flex-1 overflow-y-auto">
             {children}
           </main>

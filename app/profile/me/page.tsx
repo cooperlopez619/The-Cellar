@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '../../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getRank } from '@/lib/ranks'
+import QRCode from '@/components/ui/QRCode'
 
 function PinIcon() {
   return (
@@ -33,6 +34,9 @@ export default function MyProfilePage() {
   const [pourCount,  setPourCount]  = useState<number | null>(null)
   const [favType,    setFavType]    = useState<string | null>(null)
   const [avgPrice,   setAvgPrice]   = useState<number | null>(null)
+  const [username,   setUsername]   = useState<string | null>(null)
+  const [showQR,     setShowQR]     = useState(false)
+  const [copied,     setCopied]     = useState(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/auth')
@@ -42,17 +46,18 @@ export default function MyProfilePage() {
     if (!user) return
     const sb = createClient()
 
+    // Pour count
     sb.from('pours')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .then(({ count }) => setPourCount(count ?? 0))
 
+    // Fav type + avg price
     sb.from('pours')
       .select('whiskeys(type, price_tier), price_tier_override')
       .eq('user_id', user.id)
       .then(({ data }) => {
         if (!data?.length) return
-        // Favorite type
         const typeCounts: Record<string, number> = {}
         const tiers: number[] = []
         data.forEach((p: any) => {
@@ -66,6 +71,13 @@ export default function MyProfilePage() {
         if (top) setFavType(top[0])
         if (tiers.length) setAvgPrice(tiers.reduce((a, v) => a + v, 0) / tiers.length)
       })
+
+    // Username from profiles
+    sb.from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setUsername(data?.username ?? null))
   }, [user])
 
   if (loading || !user) return (
@@ -78,6 +90,30 @@ export default function MyProfilePage() {
   const location     = user.user_metadata?.location
   const avatarUrl    = user.user_metadata?.avatar_url
   const pricingLabel = getPricingRating(avgPrice)
+
+  const inviteUrl = typeof window !== 'undefined' && username
+    ? `${window.location.origin}/add/${username}`
+    : null
+
+  async function copyInviteLink() {
+    if (!inviteUrl) return
+    await navigator.clipboard.writeText(inviteUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function shareInviteLink() {
+    if (!inviteUrl) return
+    if (navigator.share) {
+      await navigator.share({
+        title: 'Join me on The Cellar',
+        text: `Add me as a Drinking Buddy on The Cellar 🥃`,
+        url: inviteUrl,
+      })
+    } else {
+      copyInviteLink()
+    }
+  }
 
   return (
     <div className="page">
@@ -108,6 +144,9 @@ export default function MyProfilePage() {
         <p className="font-serif text-cellar-cream text-xl font-semibold">
           {displayName || 'Whiskey Enthusiast'}
         </p>
+        {username && (
+          <p className="text-cellar-muted text-sm mt-0.5">@{username}</p>
+        )}
         {location && (
           <div className="flex items-center gap-1 text-cellar-muted text-sm mt-1">
             <PinIcon />
@@ -147,7 +186,7 @@ export default function MyProfilePage() {
       {pourCount !== null && (() => {
         const { current, next, progress } = getRank(pourCount)
         return (
-          <div className="card p-5">
+          <div className="card p-5 mb-3">
             <p className="text-cellar-muted text-xs uppercase tracking-wide mb-1">Rank</p>
             <p className="font-serif text-cellar-amber text-xl font-semibold mb-3">{current.title}</p>
             {next ? (
@@ -165,6 +204,58 @@ export default function MyProfilePage() {
           </div>
         )
       })()}
+
+      {/* Invite / QR section */}
+      {username ? (
+        <div className="card p-5">
+          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-3">Share Your Profile</p>
+
+          {/* Link row */}
+          <div className="flex items-center gap-2 bg-cellar-bg rounded-xl px-3 py-2.5 mb-3">
+            <p className="flex-1 text-cellar-cream text-sm truncate font-mono">
+              {inviteUrl ?? `…/add/${username}`}
+            </p>
+            <button onClick={copyInviteLink} className="text-cellar-muted hover:text-cellar-cream transition-colors shrink-0" aria-label="Copy link">
+              {copied
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><path d="M20 6 9 17l-5-5"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              }
+            </button>
+            <button onClick={shareInviteLink} className="text-cellar-muted hover:text-cellar-cream transition-colors shrink-0" aria-label="Share link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+          </div>
+
+          {/* QR toggle */}
+          <button
+            onClick={() => setShowQR(v => !v)}
+            className="flex items-center gap-2 text-cellar-amber text-sm font-medium"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/>
+            </svg>
+            {showQR ? 'Hide QR Code' : 'Show QR Code'}
+          </button>
+
+          {showQR && inviteUrl && (
+            <div className="flex flex-col items-center gap-2 mt-4">
+              <div className="p-3 bg-[#1a1208] rounded-2xl border border-cellar-border">
+                <QRCode value={inviteUrl} size={190} />
+              </div>
+              <p className="text-cellar-muted text-xs text-center">Scan to add you as a Drinking Buddy</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="card p-5">
+          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Share Your Profile</p>
+          <p className="text-cellar-muted text-sm mb-3">Set a username to get your invite link and QR code.</p>
+          <Link href="/profile/settings" className="btn-primary text-center block text-sm">
+            Set Username in Settings
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

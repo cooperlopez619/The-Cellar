@@ -21,24 +21,17 @@ function PinIcon() {
   )
 }
 
-function BackIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 5l-7 7 7 7"/>
-    </svg>
-  )
-}
-
 export default function ProfileSettingsPage() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [displayName, setDisplayName] = useState('')
-  const [location, setLocation]       = useState('')
-  const [avatarUrl, setAvatarUrl]     = useState('')
-  const [saving, setSaving]           = useState(false)
-  const [uploading, setUploading]     = useState(false)
+  const [username,    setUsername]    = useState('')   // read-only after set
+  const [location,    setLocation]    = useState('')
+  const [avatarUrl,   setAvatarUrl]   = useState('')
+  const [saving,      setSaving]      = useState(false)
+  const [uploading,   setUploading]   = useState(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/auth')
@@ -49,6 +42,15 @@ export default function ProfileSettingsPage() {
     setDisplayName(user.user_metadata?.display_name ?? '')
     setLocation(user.user_metadata?.location ?? '')
     setAvatarUrl(user.user_metadata?.avatar_url ?? '')
+    // Load username from profiles table
+    createClient()
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.username) setUsername(data.username)
+      })
   }, [user])
 
   async function handleSave() {
@@ -97,8 +99,8 @@ export default function ProfileSettingsPage() {
     <div className="page">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.push('/profile')} className="p-2 rounded-xl text-cellar-muted hover:text-cellar-cream transition-colors -ml-2">
-          <BackIcon />
+        <button onClick={() => router.push('/profile')} className="text-cellar-muted">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <h1 className="font-serif text-cellar-cream text-2xl font-bold">Settings</h1>
       </div>
@@ -134,6 +136,28 @@ export default function ProfileSettingsPage() {
           <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
             placeholder="Your name" className="input" />
         </div>
+
+        {/* Username — permanent, read-only */}
+        <div>
+          <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Username</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cellar-muted text-sm select-none">@</span>
+            <input
+              type="text"
+              value={username}
+              disabled
+              className="input pl-7 opacity-60 cursor-not-allowed"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-cellar-muted">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+          </div>
+          <p className="text-cellar-muted text-xs mt-1">Your unique ID — permanent and cannot be changed</p>
+        </div>
+
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Location</label>
           <div className="relative">
@@ -142,6 +166,7 @@ export default function ProfileSettingsPage() {
               placeholder="City, State" className="input pl-8" />
           </div>
         </div>
+
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Email</label>
           <input type="email" value={user.email ?? ''} disabled className="input opacity-50 cursor-not-allowed" />

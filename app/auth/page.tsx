@@ -1,9 +1,12 @@
 'use client'
-import { Suspense, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
 import CellarLogo from '../../components/ui/CellarLogo'
 import Link from 'next/link'
+
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
 function GoogleIcon() {
   return (
@@ -23,21 +26,6 @@ function MicrosoftIcon() {
       <rect x="11" y="1"  width="9" height="9" fill="#7FBA00"/>
       <rect x="1"  y="11" width="9" height="9" fill="#00A4EF"/>
       <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-    </svg>
-  )
-}
-
-function EyeIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  ) : (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
     </svg>
   )
 }
@@ -69,32 +57,81 @@ export function PasswordInput({
         tabIndex={-1}
         aria-label={show ? 'Hide password' : 'Show password'}
       >
-        <EyeIcon open={show} />
+        {show ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        )}
       </button>
     </div>
   )
 }
 
 function AuthPageInner() {
-  const [tab, setTab]           = useState('login')
-  const [email, setEmail]       = useState('')
-  const [pw, setPw]             = useState('')
-  const [confirm, setConfirm]   = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [tab, setTab]         = useState('login')
+  const [email, setEmail]     = useState('')
+  const [pw, setPw]           = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
   const [oauthLoading, setOAuthLoading] = useState<string | null>(null)
+
+  // Username (signup only)
+  const [username,          setUsername]          = useState('')
+  const [usernameError,     setUsernameError]     = useState('')
+  const [usernameOk,        setUsernameOk]        = useState(false)
+  const [checkingUsername,  setCheckingUsername]  = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const { signIn, signUp, signInWithOAuth } = useAuth()
   const router       = useRouter()
   const searchParams = useSearchParams()
   const oauthError   = searchParams.get('error') === 'oauth'
+  const redirectTo   = searchParams.get('redirect') ?? '/'
+
+  function handleUsernameChange(val: string) {
+    const clean = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    setUsername(clean)
+    setUsernameOk(false)
+    setUsernameError('')
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (!clean) return
+    if (!USERNAME_RE.test(clean)) {
+      setUsernameError('3–20 chars · letters, numbers, and _ only')
+      return
+    }
+    setCheckingUsername(true)
+    timerRef.current = setTimeout(async () => {
+      const { data } = await createClient()
+        .from('profiles')
+        .select('id')
+        .eq('username', clean)
+        .maybeSingle()
+      setCheckingUsername(false)
+      if (data) {
+        setUsernameError('Username already taken')
+      } else {
+        setUsernameOk(true)
+      }
+    }, 400)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    if (tab === 'signup' && pw !== confirm) {
-      setError('Passwords do not match.')
-      return
+    if (tab === 'signup') {
+      if (pw !== confirm) { setError('Passwords do not match.'); return }
+      if (!username)       { setUsernameError('Choose a username'); return }
+      if (!USERNAME_RE.test(username)) { setUsernameError('Invalid username'); return }
+      if (usernameError)   { return }
+      if (!usernameOk)     { setError('Please wait for username check to finish'); return }
     }
 
     setLoading(true)
@@ -102,14 +139,24 @@ function AuthPageInner() {
       if (tab === 'login') {
         const { error: err } = await signIn(email, pw)
         if (err) { setError((err as Error).message); return }
-        router.push('/')
+        router.push(redirectTo)
       } else {
+        // 1. Create account
         const { error: err } = await signUp(email, pw)
         if (err) { setError((err as Error).message); return }
-        // Auto sign-in immediately after account creation
+        // 2. Sign in immediately
         const { error: signInErr } = await signIn(email, pw)
         if (signInErr) { setError((signInErr as Error).message); return }
-        router.push('/')
+        // 3. Claim username
+        const sb = createClient()
+        const { data: { user } } = await sb.auth.getUser()
+        if (user) {
+          await Promise.all([
+            sb.from('profiles').update({ username }).eq('id', user.id),
+            sb.auth.updateUser({ data: { display_name: username } }),
+          ])
+        }
+        router.push(redirectTo)
       }
     } finally { setLoading(false) }
   }
@@ -126,6 +173,9 @@ function AuthPageInner() {
     setError('')
     setPw('')
     setConfirm('')
+    setUsername('')
+    setUsernameError('')
+    setUsernameOk(false)
   }
 
   return (
@@ -141,35 +191,23 @@ function AuthPageInner() {
       </div>
 
       <div className="w-full max-w-sm space-y-4">
-        {/* OAuth error banner */}
         {oauthError && (
           <p className="text-cellar-red text-sm text-center bg-cellar-red/10 border border-cellar-red/20 rounded-xl px-4 py-2">
             Sign-in failed. Please try again.
           </p>
         )}
 
-        {/* Social login buttons */}
+        {/* OAuth buttons */}
         <div className="space-y-3">
-          <button
-            onClick={() => handleOAuth('google')}
-            disabled={!!oauthLoading}
-            className="w-full flex items-center justify-center gap-3 bg-cellar-surface border border-cellar-border
-                       rounded-xl px-4 py-3 text-sm font-medium text-cellar-cream
-                       active:scale-95 transition-transform disabled:opacity-60"
-          >
+          <button onClick={() => handleOAuth('google')} disabled={!!oauthLoading}
+            className="w-full flex items-center justify-center gap-3 bg-cellar-surface border border-cellar-border rounded-xl px-4 py-3 text-sm font-medium text-cellar-cream active:scale-95 transition-transform disabled:opacity-60">
             {oauthLoading === 'google'
               ? <div className="w-4 h-4 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
               : <GoogleIcon />}
             Continue with Google
           </button>
-
-          <button
-            onClick={() => handleOAuth('azure')}
-            disabled={!!oauthLoading}
-            className="w-full flex items-center justify-center gap-3 bg-cellar-surface border border-cellar-border
-                       rounded-xl px-4 py-3 text-sm font-medium text-cellar-cream
-                       active:scale-95 transition-transform disabled:opacity-60"
-          >
+          <button onClick={() => handleOAuth('azure')} disabled={!!oauthLoading}
+            className="w-full flex items-center justify-center gap-3 bg-cellar-surface border border-cellar-border rounded-xl px-4 py-3 text-sm font-medium text-cellar-cream active:scale-95 transition-transform disabled:opacity-60">
             {oauthLoading === 'azure'
               ? <div className="w-4 h-4 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
               : <MicrosoftIcon />}
@@ -177,7 +215,6 @@ function AuthPageInner() {
           </button>
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-cellar-border" />
           <span className="text-cellar-muted text-xs">or</span>
@@ -196,31 +233,47 @@ function AuthPageInner() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="email" required placeholder="Email" value={email}
-            onChange={e => setEmail(e.target.value)} className="input"
-          />
-
-          <PasswordInput
-            placeholder="Password"
-            value={pw}
-            onChange={setPw}
-            minLength={6}
-          />
-
-          {/* Confirm password — signup only */}
+          {/* Username — signup only, shown first so it feels like picking an identity */}
           {tab === 'signup' && (
-            <PasswordInput
-              placeholder="Confirm Password"
-              value={confirm}
-              onChange={setConfirm}
-              minLength={6}
-            />
+            <div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cellar-muted text-sm select-none">@</span>
+                <input
+                  type="text"
+                  placeholder="username"
+                  value={username}
+                  onChange={e => handleUsernameChange(e.target.value)}
+                  maxLength={20}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  className={`input pl-7 ${usernameError ? 'border-red-500/70' : usernameOk ? 'border-emerald-500/70' : ''}`}
+                />
+                {checkingUsername && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
+                )}
+                {usernameOk && !checkingUsername && (
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                )}
+              </div>
+              {usernameError
+                ? <p className="text-red-400 text-xs mt-1">{usernameError}</p>
+                : <p className="text-cellar-muted text-xs mt-1">Your unique ID — permanent, cannot be changed later</p>
+              }
+            </div>
+          )}
+
+          <input type="email" required placeholder="Email" value={email}
+            onChange={e => setEmail(e.target.value)} className="input" />
+
+          <PasswordInput placeholder="Password" value={pw} onChange={setPw} minLength={6} />
+
+          {tab === 'signup' && (
+            <PasswordInput placeholder="Confirm Password" value={confirm} onChange={setConfirm} minLength={6} />
           )}
 
           {error && <p className="text-cellar-red text-sm text-center">{error}</p>}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button type="submit" disabled={loading || (tab === 'signup' && (!usernameOk || !!usernameError))} className="btn-primary w-full">
             {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
           </button>
 

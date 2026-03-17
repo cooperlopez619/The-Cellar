@@ -6,6 +6,12 @@ import { useAuth } from '../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getRank } from '@/lib/ranks'
 
+// ─── invite helpers ──────────────────────────────────────────────────────────
+function getInviteUrl(username: string): string {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/add/${username}`
+}
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const PRICE_TIER_VALUE: Record<string, number> = {
@@ -80,8 +86,10 @@ export default function SocialPage() {
   const router = useRouter()
 
   // My stats
-  const [myStats,  setMyStats]  = useState<UserStat | null>(null)
-  const [myAvatar, setMyAvatar] = useState<string | null>(null)
+  const [myStats,    setMyStats]    = useState<UserStat | null>(null)
+  const [myAvatar,   setMyAvatar]   = useState<string | null>(null)
+  const [myUsername, setMyUsername] = useState<string | null>(null)
+  const [copied,     setCopied]     = useState(false)
 
   // Friendships
   const [friends,   setFriends]   = useState<UserStat[]>([])
@@ -104,6 +112,13 @@ export default function SocialPage() {
   useEffect(() => {
     if (!user) return
     setMyAvatar(user.user_metadata?.avatar_url ?? null)
+    // Load username from profiles table
+    createClient()
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setMyUsername(data?.username ?? null))
     loadAll()
   }, [user])
 
@@ -299,6 +314,45 @@ export default function SocialPage() {
           <p className="text-cellar-muted text-xs uppercase tracking-wide">Drinking Buddies</p>
           <span className="text-cellar-muted text-xs">{friends.length} {friends.length === 1 ? 'buddy' : 'buddies'}</span>
         </div>
+
+        {/* Invite row */}
+        {myUsername ? (
+          <div className="flex items-center gap-2 card px-3 py-2.5 mb-3">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-amber shrink-0">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            <p className="flex-1 text-cellar-muted text-xs truncate font-mono">/add/{myUsername}</p>
+            <button
+              onClick={async () => {
+                const url = getInviteUrl(myUsername)
+                if (navigator.share) {
+                  await navigator.share({ title: 'Join me on The Cellar', text: 'Add me as a Drinking Buddy 🥃', url })
+                } else {
+                  await navigator.clipboard.writeText(url)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }
+              }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-cellar-amber text-cellar-bg shrink-0"
+            >
+              {copied
+                ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg> Copied</>
+                : 'Share Invite'
+              }
+            </button>
+          </div>
+        ) : (
+          <Link href="/profile/settings"
+            className="flex items-center gap-2 card px-3 py-2.5 mb-3 text-cellar-muted text-xs hover:text-cellar-cream transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-amber shrink-0">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Set a username to get your invite link
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+          </Link>
+        )}
 
         {/* Search */}
         <div className="relative mb-3">

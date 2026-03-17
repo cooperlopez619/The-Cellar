@@ -10,8 +10,23 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(`${origin}${next}`)
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error && data.user) {
+      // Check if this OAuth user already has a username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (!profile?.username) {
+        // New OAuth user — must claim a username before entering the app
+        return NextResponse.redirect(`${origin}/auth/username`)
+      }
+
+      return NextResponse.redirect(`${origin}${next}`)
+    }
   }
 
   // Something went wrong — send back to auth with error flag
