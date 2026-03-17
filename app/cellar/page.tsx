@@ -33,12 +33,11 @@ function FilterDropdown({ value, onChange, options, placeholder }: {
   return (
     <div ref={ref} className="relative flex-1">
       <button onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all ${
-          value ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
+        className={`w-full flex items-center justify-between gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all ${value ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
         <span>{value || placeholder}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
           className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
-          <path d="M2 4l4 4 4-4"/>
+          <path d="M2 4l4 4 4-4" />
         </svg>
       </button>
       {open && (
@@ -62,8 +61,8 @@ function FilterDropdown({ value, onChange, options, placeholder }: {
 function PencilIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" />
     </svg>
   )
 }
@@ -71,7 +70,7 @@ function PencilIcon() {
 function StarIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   )
 }
@@ -79,7 +78,19 @@ function StarIcon({ filled }: { filled: boolean }) {
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.59 13.51l6.83 3.98" />
+      <path d="M15.41 6.51l-6.82 3.98" />
     </svg>
   )
 }
@@ -89,14 +100,14 @@ type Tab = 'pours' | 'favorites' | 'wishlist'
 export default function MyCellarPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [pours, setPours]         = useState<Pour[]>([])
+  const [pours, setPours] = useState<Pour[]>([])
   const [favorites, setFavorites] = useState<Whiskey[]>([])
-  const [wishlist, setWishlist]   = useState<Whiskey[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [tab, setTab]             = useState<Tab>('pours')
-  const [typeFilter, setType]     = useState('')
-  const [sortBy, setSortBy]       = useState('')
-  const [expanded, setExpanded]   = useState<string | null>(null)
+  const [wishlist, setWishlist] = useState<Whiskey[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('pours')
+  const [typeFilter, setType] = useState('')
+  const [sortBy, setSortBy] = useState('')
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -140,7 +151,7 @@ export default function MyCellarPage() {
     }
   }
 
-  const favIds  = new Set(favorites.map(w => w.id))
+  const favIds = new Set(favorites.map(w => w.id))
   const wishIds = new Set(wishlist.map(w => w.id))
 
   const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
@@ -152,23 +163,23 @@ export default function MyCellarPage() {
       const ai = getTier(a) != null ? (TIER_RANK[getTier(a)!] ?? 99) : 99
       const bi = getTier(b) != null ? (TIER_RANK[getTier(b)!] ?? 99) : 99
       return sortBy === 'Price ↑' ? ai - bi || getName(a).localeCompare(getName(b))
-                                  : bi - ai || getName(a).localeCompare(getName(b))
+        : bi - ai || getName(a).localeCompare(getName(b))
     })
   }
 
-  const filteredPours   = sortWhiskeys(
+  const filteredPours = sortWhiskeys(
     pours.filter(p => !typeFilter || (p.whiskeys as any)?.type === typeFilter),
     p => (p.whiskeys as any)?.name ?? '',
     p => (p.whiskeys as any)?.price_tier ?? null,
   )
   const sortedFavorites = sortWhiskeys(favorites.filter(Boolean), w => w.name, w => w.price_tier)
-  const sortedWishlist  = sortWhiskeys(wishlist.filter(Boolean),  w => w.name, w => w.price_tier)
+  const sortedWishlist = sortWhiskeys(wishlist.filter(Boolean), w => w.name, w => w.price_tier)
   const totalPours = pours.length
   const avgScore = totalPours ? +(pours.reduce((a, p) => a + (p.master_score ?? 0), 0) / totalPours).toFixed(2) : 0
-  const topType  = totalPours
+  const topType = totalPours
     ? Object.entries(pours.reduce((acc, p) => {
-        const t = (p.whiskeys as any)?.type ?? 'Unknown'; acc[t] = (acc[t] ?? 0) + 1; return acc
-      }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0]?.[0]
+      const t = (p.whiskeys as any)?.type ?? 'Unknown'; acc[t] = (acc[t] ?? 0) + 1; return acc
+    }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0]?.[0]
     : null
 
   if (authLoading || loading) return (
@@ -178,9 +189,9 @@ export default function MyCellarPage() {
   )
 
   const TABS: { key: Tab; label: string; count: number }[] = [
-    { key: 'pours',     label: 'Pours',     count: pours.length },
+    { key: 'pours', label: 'Pours', count: pours.length },
     { key: 'favorites', label: 'Favorites', count: favorites.length },
-    { key: 'wishlist',  label: 'Wishlist',  count: wishlist.length },
+    { key: 'wishlist', label: 'Wishlist', count: wishlist.length },
   ]
 
   return (
@@ -192,9 +203,9 @@ export default function MyCellarPage() {
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Pours',     value: totalPours },
+          { label: 'Pours', value: totalPours },
           { label: 'Avg Score', value: avgScore > 0 ? avgScore.toFixed(1) : '—' },
-          { label: 'Top Type',  value: topType ?? '—' },
+          { label: 'Top Type', value: topType ?? '—' },
         ].map(s => (
           <div key={s.label} className="card p-3 text-center">
             <p className="text-cellar-amber font-serif font-bold text-xl">{s.value}</p>
@@ -207,8 +218,7 @@ export default function MyCellarPage() {
       <div className="flex bg-cellar-surface border border-cellar-border rounded-xl p-1 mb-4" data-tutorial="cellar-tabs">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-              tab === t.key ? 'bg-cellar-amber text-cellar-bg' : 'text-cellar-muted'}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === t.key ? 'bg-cellar-amber text-cellar-bg' : 'text-cellar-muted'}`}>
             {t.label}{t.count > 0 ? ` (${t.count})` : ''}
           </button>
         ))}
@@ -242,7 +252,10 @@ export default function MyCellarPage() {
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 pt-1"><ScoreRing score={pour.master_score ?? calcMasterScore((pour.scores ?? {}) as Partial<Scores>)} size={52} strokeWidth={4} /></div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-serif text-cellar-cream font-semibold text-sm leading-tight truncate">{w?.name ?? 'Unknown'}</p>
+                          <p onClick={e => { e.stopPropagation(); w && router.push(`/whiskey/${w.id}`) }}
+                            className="font-serif text-cellar-cream font-semibold text-sm leading-tight truncate">
+                            {w?.name ?? 'Unknown'}
+                          </p>
                           <p className="text-cellar-muted text-xs mt-0.5">{w?.distillery}</p>
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {w?.type && <TagPill label={w.type} variant="type" />}
@@ -260,13 +273,18 @@ export default function MyCellarPage() {
                             aria-label="Toggle wishlist">
                             <BookmarkIcon filled={wishIds.has(pour.whiskey_id)} />
                           </button>
+                          <button type="button" onClick={e => { e.stopPropagation(); const d = { title: `The Cellar: ${w?.name}`, text: `Check out ${w?.name}!`, url: `https://thecellarapp.co/whiskey/${w?.id}` }; navigator.share ? navigator.share(d) : navigator.clipboard.writeText(d.url).then(() => alert('Link copied!')); }}
+                            className="p-1.5 rounded-lg transition-colors text-cellar-muted hover:text-cellar-amber"
+                            aria-label="Share">
+                            <ShareIcon />
+                          </button>
                           <button type="button" onClick={e => { e.stopPropagation(); router.push(`/edit/${pour.id}`) }}
                             className="p-1.5 rounded-lg text-cellar-muted hover:text-cellar-amber hover:bg-cellar-surface transition-colors" aria-label="Edit pour">
                             <PencilIcon />
                           </button>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                             className={`text-cellar-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                            <path d="m6 9 6 6 6-6"/>
+                            <path d="m6 9 6 6 6-6" />
                           </svg>
                         </div>
                       </div>
