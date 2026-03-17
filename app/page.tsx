@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useAuth } from '../hooks/useAuth'
 import { WHISKEY_TYPES, PRICE_TIERS, calcMasterScore, type Scores } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
@@ -160,35 +161,45 @@ export default function CatalogPage() {
     }
   }
 
+  const filtered = useMemo(() => {
+    const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
+    return whiskeys
+      .filter(w =>
+        (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.distillery.toLowerCase().includes(search.toLowerCase())) &&
+        (!typeFilter || w.type === typeFilter) &&
+        (!tierFilter || w.price_tier === tierFilter)
+      )
+      .sort((a, b) => {
+        if (sortBy === 'Name A → Z') return a.name.localeCompare(b.name)
+        if (sortBy === 'Price ↑') {
+          const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? 99) : 99
+          const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? 99) : 99
+          return ai - bi || a.name.localeCompare(b.name)
+        }
+        if (sortBy === 'Price ↓') {
+          const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? -1) : -1
+          const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? -1) : -1
+          return bi - ai || a.name.localeCompare(b.name)
+        }
+        // default (Score ↓): highest rated first
+        return (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0) || a.name.localeCompare(b.name)
+      })
+  }, [whiskeys, search, typeFilter, tierFilter, sortBy, stats])
+
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const virtualizer = useWindowVirtualizer({
+    count: filtered.length,
+    estimateSize: () => 130,
+    overscan: 8,
+    scrollMargin: listRef.current?.offsetTop ?? 0,
+  })
+
   if (authLoading || !user) return (
     <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
     </div>
   )
-
-  const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
-
-  const filtered = whiskeys
-    .filter(w =>
-      (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.distillery.toLowerCase().includes(search.toLowerCase())) &&
-      (!typeFilter || w.type === typeFilter) &&
-      (!tierFilter || w.price_tier === tierFilter)
-    )
-    .sort((a, b) => {
-      if (sortBy === 'Name A → Z') return a.name.localeCompare(b.name)
-      if (sortBy === 'Price ↑') {
-        const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? 99) : 99
-        const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? 99) : 99
-        return ai - bi || a.name.localeCompare(b.name)
-      }
-      if (sortBy === 'Price ↓') {
-        const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? -1) : -1
-        const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? -1) : -1
-        return bi - ai || a.name.localeCompare(b.name)
-      }
-      // default (Score ↓): highest rated first
-      return (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0) || a.name.localeCompare(b.name)
-    })
 
   return (
     <div className="page">
@@ -224,18 +235,34 @@ export default function CatalogPage() {
           <Link href="/log" className="btn-primary inline-block mt-4">Add a Bottle</Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((w, i) => (
-            <div key={w.id} data-tutorial={i === 0 ? 'first-whiskey-card' : undefined}>
-              <WhiskeyCard whiskey={w}
-                communityScore={stats[w.id]?.avgScore ?? 0}
-                communityBFB={stats[w.id]?.avgBFB ?? 0}
-                isFavorite={favorites.has(w.id)}
-                isWishlist={wishlists.has(w.id)}
-                onToggleFavorite={() => toggleList(w.id, 'favorite')}
-                onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
-            </div>
-          ))}
+        <div ref={listRef}>
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+            {virtualizer.getVirtualItems().map(virtualRow => {
+              const w = filtered[virtualRow.index]
+              return (
+                <div
+                  key={w.id}
+                  data-tutorial={virtualRow.index === 0 ? 'first-whiskey-card' : undefined}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
+                    paddingBottom: '12px',
+                  }}
+                >
+                  <WhiskeyCard whiskey={w}
+                    communityScore={stats[w.id]?.avgScore ?? 0}
+                    communityBFB={stats[w.id]?.avgBFB ?? 0}
+                    isFavorite={favorites.has(w.id)}
+                    isWishlist={wishlists.has(w.id)}
+                    onToggleFavorite={() => toggleList(w.id, 'favorite')}
+                    onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
