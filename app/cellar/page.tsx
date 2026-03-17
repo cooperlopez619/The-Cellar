@@ -198,7 +198,14 @@ export default function MyCellarPage() {
     <div className="page">
       <div className="flex items-center justify-between mb-5">
         <h1 className="font-serif text-cellar-cream text-2xl font-bold">My Cellar</h1>
-        <HelpButton />
+        <div className="flex items-center gap-2">
+          <Link href="/log"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-cellar-amber text-cellar-bg">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Log Pour
+          </Link>
+          <HelpButton />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-5">

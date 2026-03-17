@@ -112,11 +112,31 @@ function LogPourPage() {
   const [scoreError, setScoreError]           = useState(false)
   const [isFavorite, setIsFavorite]           = useState(false)
   const [isWishlist, setIsWishlist]           = useState(false)
+  const [pourId, setPourId]                   = useState<string | null>(null)
   const fileInputRef                          = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
   }, [user, authLoading])
+
+  // Load existing pour data for a given whiskey (if any) and pre-fill the form
+  async function loadPourData(whiskeyId: string) {
+    if (!user) return
+    const sb = createClient()
+    const [{ data: pour }, { data: lists }] = await Promise.all([
+      sb.from('pours').select('*').eq('user_id', user.id).eq('whiskey_id', whiskeyId).maybeSingle(),
+      sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', whiskeyId),
+    ])
+    if (pour) {
+      setPourId(pour.id)
+      setScores((pour.scores as Partial<Scores>) ?? { ...EMPTY })
+      setPriceTier((pour.price_tier_override as PriceTier) ?? '')
+      setNotes(pour.tasting_notes ?? '')
+      if (pour.bottle_photo_url) setPhotoPreview(pour.bottle_photo_url)
+    }
+    setIsFavorite(lists?.some(r => r.list_type === 'favorite') ?? false)
+    setIsWishlist(lists?.some(r => r.list_type === 'wishlist') ?? false)
+  }
 
   useEffect(() => {
     if (!user || !prefillId) return
@@ -125,11 +145,7 @@ function LogPourPage() {
       if (data) {
         setSelectedWhiskey(data)
         setPriceTier((data.price_tier as PriceTier) ?? '')
-        sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', prefillId)
-          .then(({ data: lists }) => {
-            setIsFavorite(lists?.some(r => r.list_type === 'favorite') ?? false)
-            setIsWishlist(lists?.some(r => r.list_type === 'wishlist') ?? false)
-          })
+        loadPourData(prefillId)
       }
     })
   }, [user, prefillId])
@@ -138,12 +154,11 @@ function LogPourPage() {
     setSelectedWhiskey(whiskey)
     setPriceTier((whiskey.price_tier as PriceTier) ?? '')
     setScores({ ...EMPTY })
-    if (user) {
-      const { data } = await createClient().from('user_lists')
-        .select('list_type').eq('user_id', user.id).eq('whiskey_id', whiskey.id)
-      setIsFavorite(data?.some(r => r.list_type === 'favorite') ?? false)
-      setIsWishlist(data?.some(r => r.list_type === 'wishlist') ?? false)
-    }
+    setNotes('')
+    setPhoto(null)
+    setPhotoPreview(null)
+    setPourId(null)
+    await loadPourData(whiskey.id)
   }
 
   async function toggleList(type: 'favorite' | 'wishlist') {
@@ -214,16 +229,18 @@ function LogPourPage() {
       bottlePhotoUrl = urlData.publicUrl
     }
 
-    const { error: err } = await createClient().from('pours').insert({
-      user_id:    user!.id,
-      whiskey_id: selectedWhiskey.id,
+    const sb = createClient()
+    const payload = {
       scores,
       master_score: masterScore,
       bfb_score:    bfbScore,
       tasting_notes: notes || null,
       bottle_photo_url: bottlePhotoUrl,
       price_tier_override: priceTier as PriceTier,
-    })
+    }
+    const { error: err } = pourId
+      ? await sb.from('pours').update(payload).eq('id', pourId)
+      : await sb.from('pours').insert({ user_id: user!.id, whiskey_id: selectedWhiskey.id, ...payload })
     setSaving(false)
     if (err) { setError(err.message); return }
     router.push('/cellar')
@@ -241,7 +258,7 @@ function LogPourPage() {
         <button onClick={() => router.back()} className="text-cellar-muted">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <h1 className="font-serif text-cellar-cream text-xl font-semibold">Log a Pour</h1>
+        <h1 className="font-serif text-cellar-cream text-xl font-semibold">{pourId ? 'Edit Pour' : 'Log a Pour'}</h1>
         <div className="ml-auto"><HelpButton /></div>
       </div>
 
@@ -402,7 +419,7 @@ function LogPourPage() {
         {error && <p className="text-cellar-red text-sm">{error}</p>}
 
         <button type="submit" disabled={saving} className="btn-primary">
-          {saving ? 'Saving…' : 'Save Pour'}
+          {saving ? 'Saving…' : pourId ? 'Update Pour' : 'Save Pour'}
         </button>
       </form>
     </div>
