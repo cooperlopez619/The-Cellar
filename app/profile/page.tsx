@@ -337,7 +337,9 @@ export default function SocialPage() {
                 const msg = `@${myUsername} wants to add you as a Drinking Buddy on The Cellar App 🥃\n${url}`
                 try {
                   if (navigator.share) {
-                    await navigator.share({ title: 'Join me on The Cellar', text: msg, url })
+                    // Pass everything in `text` only — passing `url` separately causes
+                    // iOS Messages and most apps to drop the text and show only the URL.
+                    await navigator.share({ text: msg })
                   } else {
                     throw new Error('no share api')
                   }
