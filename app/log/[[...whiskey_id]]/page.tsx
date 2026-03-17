@@ -119,6 +119,7 @@ function LogPourPage() {
   const [isFavorite, setIsFavorite]           = useState(false)
   const [isWishlist, setIsWishlist]           = useState(false)
   const [pourId, setPourId]                   = useState<string | null>(null)
+  const [existingPourNotice, setExistingPourNotice] = useState(false)
   const fileInputRef                          = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -126,19 +127,22 @@ function LogPourPage() {
   }, [user, authLoading])
 
   // Load existing pour data for a given whiskey (if any) and pre-fill the form
-  async function loadPourData(whiskeyId: string) {
+  async function loadPourData(whiskeyId: string, showNotice = false) {
     if (!user) return
     const sb = createClient()
-    const [{ data: pour }, { data: lists }] = await Promise.all([
-      sb.from('pours').select('*').eq('user_id', user.id).eq('whiskey_id', whiskeyId).maybeSingle(),
+    const [{ data: pours }, { data: lists }] = await Promise.all([
+      sb.from('pours').select('*').eq('user_id', user.id).eq('whiskey_id', whiskeyId)
+        .order('created_at', { ascending: false }).limit(1),
       sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', whiskeyId),
     ])
+    const pour = pours?.[0] ?? null
     if (pour) {
       setPourId(pour.id)
       setScores((pour.scores as Partial<Scores>) ?? { ...EMPTY })
       setPriceTier((pour.price_tier_override as PriceTier) ?? '')
       setNotes(pour.tasting_notes ?? '')
       if (pour.bottle_photo_url) setPhotoPreview(pour.bottle_photo_url)
+      if (showNotice) setExistingPourNotice(true)
     }
     setIsFavorite(lists?.some(r => r.list_type === 'favorite') ?? false)
     setIsWishlist(lists?.some(r => r.list_type === 'wishlist') ?? false)
@@ -164,7 +168,8 @@ function LogPourPage() {
     setPhoto(null)
     setPhotoPreview(null)
     setPourId(null)
-    await loadPourData(whiskey.id)
+    setExistingPourNotice(false)
+    await loadPourData(whiskey.id, true)
   }
 
   async function toggleList(type: 'favorite' | 'wishlist') {
@@ -305,6 +310,18 @@ function LogPourPage() {
             <WhiskeySearch onSelect={handleWhiskeySelect} />
           )}
         </div>
+
+        {/* Existing pour notice */}
+        {existingPourNotice && pourId && (
+          <div className="flex items-start gap-3 bg-cellar-amber/10 border border-cellar-amber/30 rounded-xl px-4 py-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cellar-amber shrink-0 mt-0.5">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <p className="text-cellar-amber text-sm leading-snug">
+              You&apos;ve already rated this whiskey. Your existing scores are loaded below — saving will update your rating, not create a new one.
+            </p>
+          </div>
+        )}
 
         {/* Price — dollar signs */}
         <div>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAuth } from '../hooks/useAuth'
-import { WHISKEY_TYPES, PRICE_TIERS, calcMasterScore, type Scores } from '../lib/scoring'
+import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import CellarLogo from '../components/ui/CellarLogo'
 import HelpButton from '../components/ui/HelpButton'
@@ -97,8 +97,7 @@ export default function CatalogPage() {
     async function load() {
       // Kick off user data fetches immediately — no whiskey IDs needed
       const poursPromise = supabase
-        .from('pours').select('whiskey_id, master_score, bfb_score, scores')
-        .eq('user_id', user!.id)
+        .from('whiskey_community_stats').select('whiskey_id, avg_score, avg_bfb')
       const listsPromise = supabase
         .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
 
@@ -123,18 +122,11 @@ export default function CatalogPage() {
         setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
       }
 
-      const map: Record<string, { s: number[]; b: number[] }> = {}
-      for (const p of pours ?? []) {
-        if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
-        const s = p.master_score ?? calcMasterScore((p.scores ?? {}) as Partial<Scores>)
-        if (s) map[p.whiskey_id].s.push(s)
-        if (p.bfb_score) map[p.whiskey_id].b.push(p.bfb_score)
-      }
       const out: Stats = {}
-      for (const [id, { s, b }] of Object.entries(map)) {
-        out[id] = {
-          avgScore: s.length ? +(s.reduce((a, v) => a + v, 0) / s.length).toFixed(2) : 0,
-          avgBFB:   b.length ? +(b.reduce((a, v) => a + v, 0) / b.length).toFixed(2) : 0,
+      for (const row of pours ?? []) {
+        out[row.whiskey_id] = {
+          avgScore: row.avg_score ?? 0,
+          avgBFB:   row.avg_bfb ?? 0,
         }
       }
 
@@ -207,9 +199,10 @@ export default function CatalogPage() {
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 130,
+    estimateSize: () => 142,
     overscan: 8,
     scrollMargin,
+    measureElement: el => el.getBoundingClientRect().height,
   })
 
   if (authLoading || !user) return (
@@ -259,6 +252,8 @@ export default function CatalogPage() {
               return (
                 <div
                   key={w.id}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualRow.index}
                   data-tutorial={virtualRow.index === 0 ? 'first-whiskey-card' : undefined}
                   style={{
                     position: 'absolute',

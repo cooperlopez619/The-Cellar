@@ -443,38 +443,20 @@ export default function SocialPage() {
             <p className="text-cellar-muted text-sm">No buddies yet — search above to add friends.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {friends.map(u => (
-              <div key={u.id} className="card p-3 flex items-center gap-3">
-                <Link href={`/profile/${u.username ?? u.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-                  {/* Left: avatar + name + username */}
-                  <div className="flex flex-col items-center gap-0.5 shrink-0 w-14">
-                    <Avatar name={u.display_name} colour={avatarColour(u.id)} />
-                    <p className="text-cellar-cream text-[10px] font-medium text-center leading-tight w-full truncate">
-                      {u.display_name ?? u.username ?? 'Unknown'}
-                    </p>
-                    {u.username && (
-                      <p className="text-cellar-muted text-[9px] text-center leading-tight">@{u.username}</p>
-                    )}
-                  </div>
-                  {/* Right: labeled stats */}
-                  <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    <p className="text-xs"><span className="text-cellar-muted">Rank: </span><span className="text-cellar-amber font-medium">{getRank(u.pour_count).current.title}</span></p>
-                    {avgTierSymbol(u.avg_price_tier) && (
-                      <p className="text-xs"><span className="text-cellar-muted">Avg. Price: </span><span className="text-cellar-cream">{avgTierSymbol(u.avg_price_tier)}</span></p>
-                    )}
-                    <p className="text-xs"><span className="text-cellar-muted">Pours: </span><span className="text-cellar-cream">{u.pour_count}</span></p>
-                    {u.fav_type && (
-                      <p className="text-xs"><span className="text-cellar-muted">Favorite Type: </span><span className="text-cellar-cream">{u.fav_type}</span></p>
-                    )}
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
-                </Link>
-                <button onClick={() => removeFriend(u.id)}
-                  className="text-cellar-muted hover:text-cellar-red transition-colors p-1 shrink-0" aria-label="Remove friend">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-              </div>
+          <div className="card overflow-hidden">
+            {friends.map((u, i) => (
+              <Link
+                key={u.id}
+                href={`/profile/${u.username ?? u.id}`}
+                className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
+              >
+                <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                  {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+              </Link>
             ))}
           </div>
         )}
