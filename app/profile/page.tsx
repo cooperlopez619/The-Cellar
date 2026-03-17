@@ -88,7 +88,7 @@ export default function ProfilePage() {
         <div className="w-24 h-24 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden mb-3">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-3xl">🥃</div>
           )}

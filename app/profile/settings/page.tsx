@@ -112,7 +112,7 @@ export default function ProfileSettingsPage() {
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-cellar-muted">
               <CameraIcon />
