@@ -187,12 +187,21 @@ export default function CatalogPage() {
   }, [whiskeys, search, typeFilter, tierFilter, sortBy, stats])
 
   const listRef = useRef<HTMLDivElement>(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+
+  // Measure the list's distance from the top of the document after it mounts
+  // so the virtualizer knows where the list starts in the scroll container.
+  useEffect(() => {
+    if (listRef.current) {
+      setScrollMargin(listRef.current.offsetTop)
+    }
+  }, [loading])   // re-measure when the list appears (loading → false)
 
   const virtualizer = useWindowVirtualizer({
     count: filtered.length,
     estimateSize: () => 130,
     overscan: 8,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
+    scrollMargin,
   })
 
   if (authLoading || !user) return (
