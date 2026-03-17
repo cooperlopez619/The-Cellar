@@ -81,6 +81,7 @@ export default function CatalogPage() {
   const [search, setSearch]         = useState('')
   const [typeFilter, setType]       = useState('')
   const [tierFilter, setTier]       = useState('')
+  const [sortBy, setSortBy]         = useState('')
   const [loading, setLoading]       = useState(true)
   const [favorites, setFavorites]   = useState<Set<string>>(new Set())
   const [wishlists, setWishlists]   = useState<Set<string>>(new Set())
@@ -93,6 +94,14 @@ export default function CatalogPage() {
     if (!user) return
     const supabase = createClient()
     async function load() {
+      // Kick off user data fetches immediately — no whiskey IDs needed
+      const poursPromise = supabase
+        .from('pours').select('whiskey_id, master_score, bfb_score, scores')
+        .eq('user_id', user!.id)
+      const listsPromise = supabase
+        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
+
+      // Fetch whiskeys (paginated)
       let all: Whiskey[] = []
       let from = 0
       const PAGE = 1000
@@ -104,38 +113,34 @@ export default function CatalogPage() {
         if (data.length < PAGE) break
         from += PAGE
       }
-      setWhiskeys(all)
-      setLoading(false)
 
-      // Load user lists
-      const { data: lists } = await supabase
-        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
+      // Wait for user data (was running in parallel with whiskey pagination)
+      const [{ data: pours }, { data: lists }] = await Promise.all([poursPromise, listsPromise])
+
       if (lists) {
         setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
         setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
       }
 
-      if (all.length) {
-        const { data: pours } = await supabase
-          .from('pours').select('whiskey_id, master_score, bfb_score, scores')
-          .eq('user_id', user!.id)
-          .in('whiskey_id', all.map(w => w.id))
-        const map: Record<string, { s: number[]; b: number[] }> = {}
-        for (const p of pours ?? []) {
-          if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
-          const s = p.master_score ?? calcMasterScore((p.scores ?? {}) as Partial<Scores>)
-          if (s) map[p.whiskey_id].s.push(s)
-          if (p.bfb_score) map[p.whiskey_id].b.push(p.bfb_score)
-        }
-        const out: Stats = {}
-        for (const [id, { s, b }] of Object.entries(map)) {
-          out[id] = {
-            avgScore: s.length ? +(s.reduce((a, v) => a + v, 0) / s.length).toFixed(2) : 0,
-            avgBFB:   b.length ? +(b.reduce((a, v) => a + v, 0) / b.length).toFixed(2) : 0,
-          }
-        }
-        setStats(out)
+      const map: Record<string, { s: number[]; b: number[] }> = {}
+      for (const p of pours ?? []) {
+        if (!map[p.whiskey_id]) map[p.whiskey_id] = { s: [], b: [] }
+        const s = p.master_score ?? calcMasterScore((p.scores ?? {}) as Partial<Scores>)
+        if (s) map[p.whiskey_id].s.push(s)
+        if (p.bfb_score) map[p.whiskey_id].b.push(p.bfb_score)
       }
+      const out: Stats = {}
+      for (const [id, { s, b }] of Object.entries(map)) {
+        out[id] = {
+          avgScore: s.length ? +(s.reduce((a, v) => a + v, 0) / s.length).toFixed(2) : 0,
+          avgBFB:   b.length ? +(b.reduce((a, v) => a + v, 0) / b.length).toFixed(2) : 0,
+        }
+      }
+
+      // Set everything at once so the page renders with complete data
+      setWhiskeys(all)
+      setStats(out)
+      setLoading(false)
     }
     load()
   }, [user])
@@ -161,11 +166,29 @@ export default function CatalogPage() {
     </div>
   )
 
-  const filtered = whiskeys.filter(w =>
-    (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.distillery.toLowerCase().includes(search.toLowerCase())) &&
-    (!typeFilter || w.type === typeFilter) &&
-    (!tierFilter || w.price_tier === tierFilter)
-  )
+  const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
+
+  const filtered = whiskeys
+    .filter(w =>
+      (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.distillery.toLowerCase().includes(search.toLowerCase())) &&
+      (!typeFilter || w.type === typeFilter) &&
+      (!tierFilter || w.price_tier === tierFilter)
+    )
+    .sort((a, b) => {
+      if (sortBy === 'Name A → Z') return a.name.localeCompare(b.name)
+      if (sortBy === 'Price ↑') {
+        const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? 99) : 99
+        const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? 99) : 99
+        return ai - bi || a.name.localeCompare(b.name)
+      }
+      if (sortBy === 'Price ↓') {
+        const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? -1) : -1
+        const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? -1) : -1
+        return bi - ai || a.name.localeCompare(b.name)
+      }
+      // default (Score ↓): highest rated first
+      return (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0) || a.name.localeCompare(b.name)
+    })
 
   return (
     <div className="page">
@@ -185,9 +208,10 @@ export default function CatalogPage() {
           data-tutorial="catalog-search" />
       </div>
 
-      <div className="flex gap-3 mb-4" data-tutorial="catalog-filters">
+      <div className="flex gap-2 mb-4" data-tutorial="catalog-filters">
         <FilterDropdown value={typeFilter} onChange={setType} options={WHISKEY_TYPES} placeholder="All Types" />
         <FilterDropdown value={tierFilter} onChange={setTier} options={PRICE_TIERS} placeholder="All Prices" />
+        <FilterDropdown value={sortBy} onChange={setSortBy} options={['Name A → Z', 'Price ↑', 'Price ↓']} placeholder="Score ↓" />
       </div>
 
       {loading ? (

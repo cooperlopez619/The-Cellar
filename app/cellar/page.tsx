@@ -31,7 +31,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: {
   }, [])
 
   return (
-    <div ref={ref} className="relative w-48">
+    <div ref={ref} className="relative flex-1">
       <button onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center justify-between gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all ${
           value ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'}`}>
@@ -68,6 +68,22 @@ function PencilIcon() {
   )
 }
 
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  )
+}
+
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+  )
+}
+
 type Tab = 'pours' | 'favorites' | 'wishlist'
 
 export default function MyCellarPage() {
@@ -79,6 +95,7 @@ export default function MyCellarPage() {
   const [loading, setLoading]     = useState(true)
   const [tab, setTab]             = useState<Tab>('pours')
   const [typeFilter, setType]     = useState('')
+  const [sortBy, setSortBy]       = useState('')
   const [expanded, setExpanded]   = useState<string | null>(null)
 
   useEffect(() => {
@@ -99,7 +116,53 @@ export default function MyCellarPage() {
     })
   }, [user])
 
-  const filteredPours = pours.filter(p => !typeFilter || (p.whiskeys as any)?.type === typeFilter)
+  async function toggleList(whiskey: Whiskey, type: 'favorite' | 'wishlist') {
+    if (!user) return
+    const supabase = createClient()
+    if (type === 'favorite') {
+      const isFav = favorites.some(w => w.id === whiskey.id)
+      if (isFav) {
+        setFavorites(prev => prev.filter(w => w.id !== whiskey.id))
+        await supabase.from('user_lists').delete().eq('user_id', user.id).eq('whiskey_id', whiskey.id).eq('list_type', 'favorite')
+      } else {
+        setFavorites(prev => [...prev, whiskey])
+        await supabase.from('user_lists').insert({ user_id: user.id, whiskey_id: whiskey.id, list_type: 'favorite' })
+      }
+    } else {
+      const isWish = wishlist.some(w => w.id === whiskey.id)
+      if (isWish) {
+        setWishlist(prev => prev.filter(w => w.id !== whiskey.id))
+        await supabase.from('user_lists').delete().eq('user_id', user.id).eq('whiskey_id', whiskey.id).eq('list_type', 'wishlist')
+      } else {
+        setWishlist(prev => [...prev, whiskey])
+        await supabase.from('user_lists').insert({ user_id: user.id, whiskey_id: whiskey.id, list_type: 'wishlist' })
+      }
+    }
+  }
+
+  const favIds  = new Set(favorites.map(w => w.id))
+  const wishIds = new Set(wishlist.map(w => w.id))
+
+  const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
+
+  function sortWhiskeys<T>(arr: T[], getName: (x: T) => string, getTier: (x: T) => string | null | undefined): T[] {
+    if (!sortBy) return arr
+    return [...arr].sort((a, b) => {
+      if (sortBy === 'Name A → Z') return getName(a).localeCompare(getName(b))
+      const ai = getTier(a) != null ? (TIER_RANK[getTier(a)!] ?? 99) : 99
+      const bi = getTier(b) != null ? (TIER_RANK[getTier(b)!] ?? 99) : 99
+      return sortBy === 'Price ↑' ? ai - bi || getName(a).localeCompare(getName(b))
+                                  : bi - ai || getName(a).localeCompare(getName(b))
+    })
+  }
+
+  const filteredPours   = sortWhiskeys(
+    pours.filter(p => !typeFilter || (p.whiskeys as any)?.type === typeFilter),
+    p => (p.whiskeys as any)?.name ?? '',
+    p => (p.whiskeys as any)?.price_tier ?? null,
+  )
+  const sortedFavorites = sortWhiskeys(favorites.filter(Boolean), w => w.name, w => w.price_tier)
+  const sortedWishlist  = sortWhiskeys(wishlist.filter(Boolean),  w => w.name, w => w.price_tier)
   const totalPours = pours.length
   const avgScore = totalPours ? +(pours.reduce((a, p) => a + (p.master_score ?? 0), 0) / totalPours).toFixed(2) : 0
   const topType  = totalPours
@@ -154,8 +217,9 @@ export default function MyCellarPage() {
       {/* Pours */}
       {tab === 'pours' && (
         <>
-          <div className="mb-4">
+          <div className="flex gap-2 mb-4">
             <FilterDropdown value={typeFilter} onChange={setType} options={WHISKEY_TYPES} placeholder="All Types" />
+            <FilterDropdown value={sortBy} onChange={setSortBy} options={['Name A → Z', 'Price ↑', 'Price ↓']} placeholder="Score ↓" />
           </div>
           {filteredPours.length === 0 ? (
             <div className="text-center py-16">
@@ -185,7 +249,17 @@ export default function MyCellarPage() {
                             {(pour.bfb_score ?? 0) > 0 && <BFBBadge score={pour.bfb_score!} />}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button type="button" onClick={e => { e.stopPropagation(); w && toggleList(w as Whiskey, 'favorite') }}
+                            className={`p-1.5 rounded-lg transition-colors ${favIds.has(pour.whiskey_id) ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-amber'}`}
+                            aria-label="Toggle favorite">
+                            <StarIcon filled={favIds.has(pour.whiskey_id)} />
+                          </button>
+                          <button type="button" onClick={e => { e.stopPropagation(); w && toggleList(w as Whiskey, 'wishlist') }}
+                            className={`p-1.5 rounded-lg transition-colors ${wishIds.has(pour.whiskey_id) ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-amber'}`}
+                            aria-label="Toggle wishlist">
+                            <BookmarkIcon filled={wishIds.has(pour.whiskey_id)} />
+                          </button>
                           <button type="button" onClick={e => { e.stopPropagation(); router.push(`/edit/${pour.id}`) }}
                             className="p-1.5 rounded-lg text-cellar-muted hover:text-cellar-amber hover:bg-cellar-surface transition-colors" aria-label="Edit pour">
                             <PencilIcon />
@@ -227,9 +301,20 @@ export default function MyCellarPage() {
             <p className="text-cellar-muted text-xs mt-1">Tap the ★ on any whiskey in the catalog.</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {favorites.filter(Boolean).map(w => <WhiskeyCard key={w.id} whiskey={w} />)}
-          </div>
+          <>
+            <div className="flex gap-2 mb-4">
+              <FilterDropdown value={sortBy} onChange={setSortBy} options={['Price ↑', 'Price ↓']} placeholder="Name A → Z" />
+            </div>
+            <div className="space-y-3">
+              {sortedFavorites.map(w => (
+                <WhiskeyCard key={w.id} whiskey={w}
+                  isFavorite={true}
+                  isWishlist={wishIds.has(w.id)}
+                  onToggleFavorite={() => toggleList(w, 'favorite')}
+                  onToggleWishlist={() => toggleList(w, 'wishlist')} />
+              ))}
+            </div>
+          </>
         )
       )}
 
@@ -241,9 +326,20 @@ export default function MyCellarPage() {
             <p className="text-cellar-muted text-xs mt-1">Tap the bookmark on any whiskey in the catalog.</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {wishlist.filter(Boolean).map(w => <WhiskeyCard key={w.id} whiskey={w} />)}
-          </div>
+          <>
+            <div className="flex gap-2 mb-4">
+              <FilterDropdown value={sortBy} onChange={setSortBy} options={['Price ↑', 'Price ↓']} placeholder="Name A → Z" />
+            </div>
+            <div className="space-y-3">
+              {sortedWishlist.map(w => (
+                <WhiskeyCard key={w.id} whiskey={w}
+                  isFavorite={favIds.has(w.id)}
+                  isWishlist={true}
+                  onToggleFavorite={() => toggleList(w, 'favorite')}
+                  onToggleWishlist={() => toggleList(w, 'wishlist')} />
+              ))}
+            </div>
+          </>
         )
       )}
     </div>
