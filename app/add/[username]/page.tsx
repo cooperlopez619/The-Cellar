@@ -83,8 +83,14 @@ export default function AddFriendPage() {
   async function sendRequest() {
     if (!user || !profile) return
     setActing(true)
-    await createClient().from('friendships').insert({ requester_id: user.id, addressee_id: profile.id })
-    setStatus('pending_sent')
+    // Invite link = the profile owner already expressed intent to be friends,
+    // so skip the pending state and create an accepted friendship immediately.
+    await createClient().from('friendships').insert({
+      requester_id: user.id,
+      addressee_id: profile.id,
+      status: 'accepted',
+    })
+    setStatus('friends')
     setActing(false)
   }
 
@@ -176,13 +182,8 @@ export default function AddFriendPage() {
       {/* Action button */}
       {status === 'none' && (
         <button onClick={sendRequest} disabled={acting} className="btn-primary w-full max-w-sm">
-          {acting ? 'Sending…' : '+ Add as Drinking Buddy'}
+          {acting ? 'Adding…' : '🥃 Become Drinking Buddies'}
         </button>
-      )}
-      {status === 'pending_sent' && (
-        <div className="w-full max-w-sm text-center card p-4 text-cellar-muted text-sm">
-          Friend request sent — waiting for them to accept 🍾
-        </div>
       )}
       {status === 'pending_received' && (
         <button onClick={acceptRequest} disabled={acting} className="btn-primary w-full max-w-sm">
