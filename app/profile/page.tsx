@@ -249,52 +249,56 @@ export default function SocialPage() {
 
       {/* ── My Profile Card ─────────────────────────────────────────────── */}
       <Link href="/profile/me" className="card p-4 flex items-center gap-4 active:opacity-80 transition-opacity block">
-        <div className="w-14 h-14 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden shrink-0">
-          {myAvatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl">🥃</div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-cellar-cream font-semibold text-base truncate">
+        {/* Left: avatar + name + username */}
+        <div className="flex flex-col items-center gap-0.5 shrink-0 w-16">
+          <div className="w-14 h-14 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden">
+            {myAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl">🥃</div>
+            )}
+          </div>
+          <p className="text-cellar-cream font-semibold text-xs text-center leading-tight w-full truncate">
             {user.user_metadata?.display_name || 'Whiskey Enthusiast'}
           </p>
           {myUsername && (
-            <p className="text-cellar-muted text-xs mt-0.5">@{myUsername}</p>
+            <p className="text-cellar-muted text-[10px] text-center leading-tight">@{myUsername}</p>
           )}
-          <div className="flex gap-x-3 gap-y-0.5 mt-1.5 flex-wrap">
-            {myStats && (
-              <span className="text-xs">
-                <span className="text-cellar-muted">Rank </span>
-                <span className="text-cellar-amber font-medium">{getRank(myStats.pour_count).current.title}</span>
-              </span>
-            )}
-            {myStats && getPricingRating(myStats.avg_price_tier) && (
-              <span className="text-xs">
-                <span className="text-cellar-muted">Style </span>
-                <span className="text-cellar-cream">{getPricingRating(myStats.avg_price_tier)}</span>
-              </span>
-            )}
-            <span className="text-xs">
-              <span className="text-cellar-muted">Pours </span>
-              <span className="text-cellar-cream">{myStats?.pour_count ?? 0}</span>
-            </span>
-            {myStats?.fav_type && (
-              <span className="text-xs">
-                <span className="text-cellar-muted">Type </span>
-                <span className="text-cellar-cream">{myStats.fav_type}</span>
-              </span>
-            )}
-            {myRank > 0 && friends.length > 0 && (
-              <span className="text-xs">
-                <span className="text-cellar-muted">Board </span>
-                <span className="text-cellar-cream">#{myRank}</span>
-              </span>
-            )}
-          </div>
         </div>
+
+        {/* Right: labeled stats */}
+        <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1.5">
+          {myStats && (
+            <div>
+              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Rank:</p>
+              <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(myStats.pour_count).current.title}</p>
+            </div>
+          )}
+          {myStats && getPricingRating(myStats.avg_price_tier) && (
+            <div>
+              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Price:</p>
+              <p className="text-cellar-cream text-xs leading-tight">{getPricingRating(myStats.avg_price_tier)}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Pours:</p>
+            <p className="text-cellar-cream text-xs leading-tight">{myStats?.pour_count ?? 0}</p>
+          </div>
+          {myStats?.fav_type && (
+            <div>
+              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Favorite Type:</p>
+              <p className="text-cellar-cream text-xs leading-tight">{myStats.fav_type}</p>
+            </div>
+          )}
+          {myRank > 0 && friends.length > 0 && (
+            <div>
+              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Board:</p>
+              <p className="text-cellar-cream text-xs leading-tight">#{myRank}</p>
+            </div>
+          )}
+        </div>
+
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
       </Link>
 
@@ -452,31 +456,38 @@ export default function SocialPage() {
             {friends.map(u => (
               <div key={u.id} className="card p-3 flex items-center gap-3">
                 <Link href={`/profile/${u.username ?? u.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-                  <Avatar name={u.display_name} colour={avatarColour(u.id)} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
-                    <div className="flex gap-x-3 gap-y-0.5 mt-1 flex-wrap">
-                      <span className="text-xs">
-                        <span className="text-cellar-muted">Rank </span>
-                        <span className="text-cellar-amber font-medium">{getRank(u.pour_count).current.title}</span>
-                      </span>
-                      {getPricingRating(u.avg_price_tier) && (
-                        <span className="text-xs">
-                          <span className="text-cellar-muted">Style </span>
-                          <span className="text-cellar-cream">{getPricingRating(u.avg_price_tier)}</span>
-                        </span>
-                      )}
-                      <span className="text-xs">
-                        <span className="text-cellar-muted">Pours </span>
-                        <span className="text-cellar-cream">{u.pour_count}</span>
-                      </span>
-                      {u.fav_type && (
-                        <span className="text-xs">
-                          <span className="text-cellar-muted">Type </span>
-                          <span className="text-cellar-cream">{u.fav_type}</span>
-                        </span>
-                      )}
+                  {/* Left: avatar + name + username */}
+                  <div className="flex flex-col items-center gap-0.5 shrink-0 w-14">
+                    <Avatar name={u.display_name} colour={avatarColour(u.id)} />
+                    <p className="text-cellar-cream text-[10px] font-medium text-center leading-tight w-full truncate">
+                      {u.display_name ?? u.username ?? 'Unknown'}
+                    </p>
+                    {u.username && (
+                      <p className="text-cellar-muted text-[9px] text-center leading-tight">@{u.username}</p>
+                    )}
+                  </div>
+                  {/* Right: labeled stats */}
+                  <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1">
+                    <div>
+                      <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Rank:</p>
+                      <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(u.pour_count).current.title}</p>
                     </div>
+                    {getPricingRating(u.avg_price_tier) && (
+                      <div>
+                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Price:</p>
+                        <p className="text-cellar-cream text-xs leading-tight">{getPricingRating(u.avg_price_tier)}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Pours:</p>
+                      <p className="text-cellar-cream text-xs leading-tight">{u.pour_count}</p>
+                    </div>
+                    {u.fav_type && (
+                      <div>
+                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Favorite Type:</p>
+                        <p className="text-cellar-cream text-xs leading-tight">{u.fav_type}</p>
+                      </div>
+                    )}
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
