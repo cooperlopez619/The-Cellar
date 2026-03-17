@@ -326,12 +326,21 @@ export default function SocialPage() {
             <button
               onClick={async () => {
                 const url = getInviteUrl(myUsername)
-                if (navigator.share) {
-                  await navigator.share({ title: 'Join me on The Cellar', text: 'Add me as a Drinking Buddy 🥃', url })
-                } else {
-                  await navigator.clipboard.writeText(url)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: 'Join me on The Cellar', text: 'Add me as a Drinking Buddy 🥃', url })
+                  } else {
+                    throw new Error('no share api')
+                  }
+                } catch {
+                  // Share was cancelled or unavailable — fall back to clipboard
+                  try {
+                    await navigator.clipboard.writeText(url)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  } catch {
+                    // Clipboard also unavailable — silently ignore
+                  }
                 }
               }}
               className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-cellar-amber text-cellar-bg shrink-0"
