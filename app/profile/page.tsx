@@ -274,34 +274,19 @@ export default function SocialPage() {
         </div>
 
         {/* Right: labeled stats */}
-        <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1.5">
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
           {myStats && (
-            <div>
-              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Rank:</p>
-              <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(myStats.pour_count).current.title}</p>
-            </div>
+            <p className="text-xs"><span className="text-cellar-muted">Rank: </span><span className="text-cellar-amber font-medium">{getRank(myStats.pour_count).current.title}</span></p>
           )}
           {myStats && avgTierSymbol(myStats.avg_price_tier) && (
-            <div>
-              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Avg. Price:</p>
-              <p className="text-cellar-cream text-xs leading-tight">{avgTierSymbol(myStats.avg_price_tier)}</p>
-            </div>
+            <p className="text-xs"><span className="text-cellar-muted">Avg. Price: </span><span className="text-cellar-cream">{avgTierSymbol(myStats.avg_price_tier)}</span></p>
           )}
-          <div>
-            <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Pours:</p>
-            <p className="text-cellar-cream text-xs leading-tight">{myStats?.pour_count ?? 0}</p>
-          </div>
+          <p className="text-xs"><span className="text-cellar-muted">Pours: </span><span className="text-cellar-cream">{myStats?.pour_count ?? 0}</span></p>
           {myStats?.fav_type && (
-            <div>
-              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Favorite Type:</p>
-              <p className="text-cellar-cream text-xs leading-tight">{myStats.fav_type}</p>
-            </div>
+            <p className="text-xs"><span className="text-cellar-muted">Favorite Type: </span><span className="text-cellar-cream">{myStats.fav_type}</span></p>
           )}
           {myRank > 0 && friends.length > 0 && (
-            <div>
-              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Board:</p>
-              <p className="text-cellar-cream text-xs leading-tight">#{myRank}</p>
-            </div>
+            <p className="text-xs"><span className="text-cellar-muted">Board: </span><span className="text-cellar-cream">#{myRank}</span></p>
           )}
         </div>
 
@@ -473,26 +458,14 @@ export default function SocialPage() {
                     )}
                   </div>
                   {/* Right: labeled stats */}
-                  <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1">
-                    <div>
-                      <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Rank:</p>
-                      <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(u.pour_count).current.title}</p>
-                    </div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <p className="text-xs"><span className="text-cellar-muted">Rank: </span><span className="text-cellar-amber font-medium">{getRank(u.pour_count).current.title}</span></p>
                     {avgTierSymbol(u.avg_price_tier) && (
-                      <div>
-                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Avg. Price:</p>
-                        <p className="text-cellar-cream text-xs leading-tight">{avgTierSymbol(u.avg_price_tier)}</p>
-                      </div>
+                      <p className="text-xs"><span className="text-cellar-muted">Avg. Price: </span><span className="text-cellar-cream">{avgTierSymbol(u.avg_price_tier)}</span></p>
                     )}
-                    <div>
-                      <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Pours:</p>
-                      <p className="text-cellar-cream text-xs leading-tight">{u.pour_count}</p>
-                    </div>
+                    <p className="text-xs"><span className="text-cellar-muted">Pours: </span><span className="text-cellar-cream">{u.pour_count}</span></p>
                     {u.fav_type && (
-                      <div>
-                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Favorite Type:</p>
-                        <p className="text-cellar-cream text-xs leading-tight">{u.fav_type}</p>
-                      </div>
+                      <p className="text-xs"><span className="text-cellar-muted">Favorite Type: </span><span className="text-cellar-cream">{u.fav_type}</span></p>
                     )}
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
