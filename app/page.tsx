@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAuth } from '../hooks/useAuth'
 import { WHISKEY_TYPES, PRICE_TIERS, calcMasterScore, type Scores } from '../lib/scoring'
 import WhiskeyCard from '../components/whiskey/WhiskeyCard'
@@ -187,18 +187,26 @@ export default function CatalogPage() {
   }, [whiskeys, search, typeFilter, tierFilter, sortBy, stats])
 
   const listRef = useRef<HTMLDivElement>(null)
-  const [scrollMargin, setScrollMargin] = useState(0)
-
-  // Measure the list's distance from the top of the document after it mounts
-  // so the virtualizer knows where the list starts in the scroll container.
+  // The scroll container is <main> in the root layout (overflow-y-auto),
+  // not the window — so we use useVirtualizer with getScrollElement.
+  const scrollContainerRef = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    if (listRef.current) {
-      setScrollMargin(listRef.current.offsetTop)
-    }
-  }, [loading])   // re-measure when the list appears (loading → false)
+    scrollContainerRef.current = document.querySelector('main')
+  }, [])
 
-  const virtualizer = useWindowVirtualizer({
+  const [scrollMargin, setScrollMargin] = useState(0)
+  // Measure the list's offset from the top of <main> after it mounts.
+  useEffect(() => {
+    if (!loading && listRef.current && scrollContainerRef.current) {
+      const listRect = listRef.current.getBoundingClientRect()
+      const containerRect = scrollContainerRef.current.getBoundingClientRect()
+      setScrollMargin(listRect.top - containerRect.top + scrollContainerRef.current.scrollTop)
+    }
+  }, [loading])
+
+  const virtualizer = useVirtualizer({
     count: filtered.length,
+    getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 130,
     overscan: 8,
     scrollMargin,
