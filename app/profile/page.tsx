@@ -261,28 +261,38 @@ export default function SocialPage() {
           <p className="text-cellar-cream font-semibold text-base truncate">
             {user.user_metadata?.display_name || 'Whiskey Enthusiast'}
           </p>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {myUsername && (
-              <span className="text-cellar-muted text-xs">@{myUsername}</span>
-            )}
-            {myUsername && myStats && (
-              <span className="text-cellar-muted text-xs">·</span>
-            )}
+          {myUsername && (
+            <p className="text-cellar-muted text-xs mt-0.5">@{myUsername}</p>
+          )}
+          <div className="flex gap-x-3 gap-y-0.5 mt-1.5 flex-wrap">
             {myStats && (
-              <span className="text-cellar-amber text-xs font-medium">
-                {getRank(myStats.pour_count).current.title}
+              <span className="text-xs">
+                <span className="text-cellar-muted">Rank </span>
+                <span className="text-cellar-amber font-medium">{getRank(myStats.pour_count).current.title}</span>
               </span>
             )}
             {myStats && getPricingRating(myStats.avg_price_tier) && (
-              <span className="text-cellar-muted text-xs">· {getPricingRating(myStats.avg_price_tier)}</span>
+              <span className="text-xs">
+                <span className="text-cellar-muted">Style </span>
+                <span className="text-cellar-cream">{getPricingRating(myStats.avg_price_tier)}</span>
+              </span>
+            )}
+            <span className="text-xs">
+              <span className="text-cellar-muted">Pours </span>
+              <span className="text-cellar-cream">{myStats?.pour_count ?? 0}</span>
+            </span>
+            {myStats?.fav_type && (
+              <span className="text-xs">
+                <span className="text-cellar-muted">Type </span>
+                <span className="text-cellar-cream">{myStats.fav_type}</span>
+              </span>
             )}
             {myRank > 0 && friends.length > 0 && (
-              <span className="text-cellar-muted text-xs">· #{myRank}</span>
+              <span className="text-xs">
+                <span className="text-cellar-muted">Board </span>
+                <span className="text-cellar-cream">#{myRank}</span>
+              </span>
             )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <span className="text-cellar-muted text-xs">{myStats?.pour_count ?? 0} pours</span>
-            {myStats?.fav_type && <span className="text-cellar-muted text-xs">· {myStats.fav_type}</span>}
           </div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
@@ -441,20 +451,37 @@ export default function SocialPage() {
           <div className="space-y-2">
             {friends.map(u => (
               <div key={u.id} className="card p-3 flex items-center gap-3">
-                <Avatar name={u.display_name} colour={avatarColour(u.id)} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
-                  <p className="text-cellar-amber text-xs">{getRank(u.pour_count).current.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-cellar-muted text-xs">{u.pour_count} pours</span>
-                    {u.fav_type && <span className="text-cellar-muted text-xs">· {u.fav_type}</span>}
-                    {getPricingRating(u.avg_price_tier) && (
-                      <span className="text-cellar-muted text-xs">· {getPricingRating(u.avg_price_tier)}</span>
-                    )}
+                <Link href={`/profile/${u.username ?? u.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                  <Avatar name={u.display_name} colour={avatarColour(u.id)} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                    <div className="flex gap-x-3 gap-y-0.5 mt-1 flex-wrap">
+                      <span className="text-xs">
+                        <span className="text-cellar-muted">Rank </span>
+                        <span className="text-cellar-amber font-medium">{getRank(u.pour_count).current.title}</span>
+                      </span>
+                      {getPricingRating(u.avg_price_tier) && (
+                        <span className="text-xs">
+                          <span className="text-cellar-muted">Style </span>
+                          <span className="text-cellar-cream">{getPricingRating(u.avg_price_tier)}</span>
+                        </span>
+                      )}
+                      <span className="text-xs">
+                        <span className="text-cellar-muted">Pours </span>
+                        <span className="text-cellar-cream">{u.pour_count}</span>
+                      </span>
+                      {u.fav_type && (
+                        <span className="text-xs">
+                          <span className="text-cellar-muted">Type </span>
+                          <span className="text-cellar-cream">{u.fav_type}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+                </Link>
                 <button onClick={() => removeFriend(u.id)}
-                  className="text-cellar-muted hover:text-cellar-red transition-colors p-1" aria-label="Remove friend">
+                  className="text-cellar-muted hover:text-cellar-red transition-colors p-1 shrink-0" aria-label="Remove friend">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
               </div>
