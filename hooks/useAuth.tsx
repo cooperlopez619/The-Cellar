@@ -38,7 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithOAuth: (provider) =>
         supabase.auth.signInWithOAuth({
           provider,
-          options: { redirectTo: `${window.location.origin}/auth/callback` },
+          options: { 
+            redirectTo: `${window.location.origin}/auth/callback`,
+            scopes: provider === 'azure' ? 'email' : undefined,
+          },
         }),
       signOut: () => supabase.auth.signOut().then(),
     }}>
