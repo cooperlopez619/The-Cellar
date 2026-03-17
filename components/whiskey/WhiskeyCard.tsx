@@ -40,9 +40,8 @@ export default function WhiskeyCard({
   return (
     <Link href={`/whiskey/${whiskey.id}`} className="card block p-4 active:scale-[0.98] transition-transform">
       <div className="flex items-start gap-3">
-        <div className="shrink-0 flex flex-col items-center gap-1.5 pt-1">
+        <div className="shrink-0 pt-1">
           <ScoreRing score={communityScore} size={56} strokeWidth={4} />
-          {communityBFB > 0 && <BFBBadge score={communityBFB} />}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-serif text-cellar-cream font-semibold text-base leading-tight truncate">{whiskey.name}</h3>
@@ -51,9 +50,12 @@ export default function WhiskeyCard({
             <TagPill label={whiskey.type} variant="type" />
             {whiskey.region && <TagPill label={whiskey.region} />}
             {whiskey.abv && <TagPill label={`${whiskey.abv}%`} />}
-            {whiskey.price_tier && (
-              <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier as PriceTier] ?? ''}`} />
-            )}
+            {communityBFB > 0
+              ? <BFBBadge score={communityBFB} />
+              : whiskey.price_tier && (
+                  <TagPill label={`${whiskey.price_tier} · ${PRICE_TIER_RANGE[whiskey.price_tier as PriceTier] ?? ''}`} />
+                )
+            }
           </div>
         </div>
         {(onToggleFavorite || onToggleWishlist) && (
