@@ -26,12 +26,16 @@ export default function ProfileSettingsPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [displayName, setDisplayName] = useState('')
-  const [username,    setUsername]    = useState('')   // read-only after set
-  const [location,    setLocation]    = useState('')
-  const [avatarUrl,   setAvatarUrl]   = useState('')
-  const [saving,      setSaving]      = useState(false)
-  const [uploading,   setUploading]   = useState(false)
+  const [displayName,    setDisplayName]    = useState('')
+  const [username,       setUsername]       = useState('')   // read-only after set
+  const [location,       setLocation]       = useState('')
+  const [locationError,  setLocationError]  = useState('')
+  const [avatarUrl,      setAvatarUrl]      = useState('')
+  const [saving,         setSaving]         = useState(false)
+  const [uploading,      setUploading]      = useState(false)
+
+  // City, State/Province — at least "Word, Word"
+  const LOCATION_RE = /^[^,]+,\s*[^,]+$/
 
   useEffect(() => {
     if (!loading && !user) router.replace('/auth')
@@ -55,6 +59,12 @@ export default function ProfileSettingsPage() {
 
   async function handleSave() {
     if (!user) return
+    const trimmedLocation = location.trim()
+    if (trimmedLocation && !LOCATION_RE.test(trimmedLocation)) {
+      setLocationError('Enter as City, State/Province (e.g. Nashville, TN)')
+      return
+    }
+    setLocationError('')
     setSaving(true)
     await createClient().auth.updateUser({
       data: {
@@ -162,9 +172,18 @@ export default function ProfileSettingsPage() {
           <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Location</label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2"><PinIcon /></div>
-            <input type="text" value={location} onChange={e => setLocation(e.target.value)}
-              placeholder="City, State" className="input pl-8" />
+            <input
+              type="text"
+              value={location}
+              onChange={e => { setLocation(e.target.value); setLocationError('') }}
+              placeholder="Nashville, TN"
+              className={`input pl-8 ${locationError ? 'border-red-500/70' : ''}`}
+            />
           </div>
+          {locationError
+            ? <p className="text-red-400 text-xs mt-1">{locationError}</p>
+            : <p className="text-cellar-muted text-xs mt-1">Format: City, State/Province</p>
+          }
         </div>
 
         <div>

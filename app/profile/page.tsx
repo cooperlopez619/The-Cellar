@@ -261,6 +261,9 @@ export default function SocialPage() {
           <p className="text-cellar-cream font-semibold text-base truncate">
             {user.user_metadata?.display_name || 'Whiskey Enthusiast'}
           </p>
+          {myUsername && (
+            <p className="text-cellar-muted text-xs mt-0.5">@{myUsername}</p>
+          )}
           {myStats && (
             <p className="text-cellar-amber text-xs font-medium mt-0.5">
               {getRank(myStats.pour_count).current.title}
