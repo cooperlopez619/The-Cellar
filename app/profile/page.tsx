@@ -27,6 +27,12 @@ function getPricingRating(avg: number | null): string | null {
   return 'Unicorn Chaser'
 }
 
+function avgTierSymbol(avg: number | null): string | null {
+  if (avg === null) return null
+  const rounded = Math.max(1, Math.min(5, Math.round(avg)))
+  return '$'.repeat(rounded)
+}
+
 function getInitials(name: string | null): string {
   if (!name) return '?'
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -275,10 +281,10 @@ export default function SocialPage() {
               <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(myStats.pour_count).current.title}</p>
             </div>
           )}
-          {myStats && getPricingRating(myStats.avg_price_tier) && (
+          {myStats && avgTierSymbol(myStats.avg_price_tier) && (
             <div>
-              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Price:</p>
-              <p className="text-cellar-cream text-xs leading-tight">{getPricingRating(myStats.avg_price_tier)}</p>
+              <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Avg. Price:</p>
+              <p className="text-cellar-cream text-xs leading-tight">{avgTierSymbol(myStats.avg_price_tier)}</p>
             </div>
           )}
           <div>
@@ -472,10 +478,10 @@ export default function SocialPage() {
                       <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Rank:</p>
                       <p className="text-cellar-amber text-xs font-medium leading-tight">{getRank(u.pour_count).current.title}</p>
                     </div>
-                    {getPricingRating(u.avg_price_tier) && (
+                    {avgTierSymbol(u.avg_price_tier) && (
                       <div>
-                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Price:</p>
-                        <p className="text-cellar-cream text-xs leading-tight">{getPricingRating(u.avg_price_tier)}</p>
+                        <p className="text-cellar-muted text-[10px] uppercase tracking-wide">Avg. Price:</p>
+                        <p className="text-cellar-cream text-xs leading-tight">{avgTierSymbol(u.avg_price_tier)}</p>
                       </div>
                     )}
                     <div>
