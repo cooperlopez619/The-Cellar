@@ -326,16 +326,17 @@ export default function SocialPage() {
             <button
               onClick={async () => {
                 const url = getInviteUrl(myUsername)
+                const msg = `@${myUsername} wants to add you as a Drinking Buddy on The Cellar App 🥃\n${url}`
                 try {
                   if (navigator.share) {
-                    await navigator.share({ title: 'Join me on The Cellar', text: 'Add me as a Drinking Buddy 🥃', url })
+                    await navigator.share({ title: 'Join me on The Cellar', text: msg, url })
                   } else {
                     throw new Error('no share api')
                   }
                 } catch {
                   // Share was cancelled or unavailable — fall back to clipboard
                   try {
-                    await navigator.clipboard.writeText(url)
+                    await navigator.clipboard.writeText(msg)
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   } catch {
