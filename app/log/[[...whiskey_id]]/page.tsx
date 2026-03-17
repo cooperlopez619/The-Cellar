@@ -16,6 +16,12 @@ import HelpButton from '@/components/ui/HelpButton'
 
 const EMPTY: Partial<Scores> = { nose: 0, palate: 0, finish: 0, bottle: 0, label: 0 }
 
+const TASTE_DESCRIPTIONS: Record<string, string> = {
+  nose:   'Rate the aroma when you bring the glass to your nose. Consider complexity, intensity, and the scents you detect — fruits, oak, spice, or smoke.',
+  palate: 'Rate the taste on your tongue. Consider balance, depth of flavor, and how the character of the spirit develops as you sip.',
+  finish: 'Rate the lingering sensation after swallowing. Consider length, warmth, and how pleasant the aftertaste is.',
+}
+
 function WhiskeySearch({ onSelect }: { onSelect: (w: Whiskey) => void }) {
   const [query, setQuery]     = useState('')
   const [results, setResults] = useState<Whiskey[]>([])
@@ -349,7 +355,8 @@ function LogPourPage() {
               <p className="text-cellar-muted text-xs uppercase tracking-wide">Taste</p>
               {TASTE_SUBSCORES.map(s => (
                 <ScoreSlider key={s.key} label={s.label} scoreKey={s.key}
-                  value={(scores as Record<string, number>)[s.key] ?? 0} onChange={handleScore} />
+                  value={(scores as Record<string, number>)[s.key] ?? 0} onChange={handleScore}
+                  description={TASTE_DESCRIPTIONS[s.key]} />
               ))}
             </div>
 
