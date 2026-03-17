@@ -8,33 +8,51 @@ const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-// Map all CSV types → original 5 schema types
+// Map all CSV types → 8 schema types
 const TYPE_MAP = {
+  // Bourbon
   'Bourbon':              'Bourbon',
-  'Tennessee':            'Bourbon',   // Lincoln County process, bourbon-adjacent
-  'American':             'Bourbon',   // American whiskey defaults to Bourbon
-  'American Single Malt': 'Bourbon',   // US craft malt whiskey
-  'Corn':                 'Bourbon',   // Corn whiskey / bourbon style
-  'American Brandy':      'Bourbon',   // Edge case — closest match
+  'American':             'Bourbon',
+  'Corn':                 'Bourbon',
+  'American Brandy':      'Bourbon',
+  'American Whiskey':     'Bourbon',
+  // Tennessee — own type
+  'Tennessee':            'Tennessee',
+  // American Single Malt — own type
+  'American Single Malt': 'American Single Malt',
+  // Scotch (single malt + blends)
   'Scotch':               'Scotch',
   'Blended Scotch':       'Scotch',
   'Blended Malt Scotch':  'Scotch',
   'Blended Grain Scotch': 'Scotch',
   'Blended':              'Scotch',
-  'Welsh':                'Scotch',    // Single malt, Scotch style
-  'English':              'Scotch',    // Single malt, Scotch style
-  'Swedish':              'Scotch',    // Single malt, Scotch style
-  'Danish':               'Scotch',    // Single malt, Scotch style
-  'Australian':           'Scotch',    // Single malt, Scotch style
-  'Indian':               'Scotch',    // Single malt, Scotch style
+  // Japanese + Taiwan
   'Japanese':             'Japanese',
-  'Taiwanese':            'Japanese',  // Craft East Asian whisky tradition
+  'Taiwanese':            'Japanese',
+  // Irish
   'Irish':                'Irish',
+  // Rye + Canadian
   'Rye':                  'Rye',
-  'Canadian':             'Rye',       // Canadian whisky is typically rye-forward
+  'Canadian':             'Rye',
+  // World — international single malts outside Japan/Ireland/Scotland
+  'Welsh':                'World',
+  'English':              'World',
+  'Swedish':              'World',
+  'Danish':               'World',
+  'Finnish':              'World',
+  'Australian':           'World',
+  'Indian':               'World',
 }
 
-const csvPath = '/Users/cooper/Downloads/the_cellar_whiskeys.csv'
+const PRICE_TIER_MAP = {
+  'Budget':  '$',
+  'Mid':     '$$',
+  'Premium': '$$$',
+  'Luxury':  '$$$$',
+  'Unicorn': '$$$$$',
+}
+
+const csvPath = '/Users/cooper/Downloads/the_cellar_whiskeys_v2.csv'
 const csv = readFileSync(csvPath, 'utf-8')
 const lines = csv.trim().split('\n')
 const headers = lines[0].split(',')
@@ -47,7 +65,7 @@ const whiskeys = lines.slice(1).map(line => {
     type: TYPE_MAP[values[3]?.trim()] ?? 'Bourbon',
     region: values[4]?.trim(),
     abv: parseFloat(values[5]),
-    price_tier: values[6]?.trim(),
+    price_tier: PRICE_TIER_MAP[values[6]?.trim()] ?? '$$',
     is_custom: values[8]?.trim().toLowerCase() === 'true',
   }
 }).filter(w => w.name)

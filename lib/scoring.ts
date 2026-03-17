@@ -1,4 +1,4 @@
-export type WhiskeyType = 'Bourbon' | 'Scotch' | 'Japanese' | 'Irish' | 'Rye'
+export type WhiskeyType = 'Bourbon' | 'Tennessee' | 'Scotch' | 'Japanese' | 'Irish' | 'Rye' | 'American Single Malt' | 'World'
 export type PriceTier   = '$' | '$$' | '$$$' | '$$$$' | '$$$$$'
 
 export interface SubScoreDef { key: string; label: string }
@@ -67,11 +67,14 @@ export const PRICE_TIER_RANGE: Record<PriceTier, string> = {
   '$$$$$': '$300+',
 }
 
-export const WHISKEY_TYPES: WhiskeyType[] = ['Bourbon', 'Scotch', 'Japanese', 'Irish', 'Rye']
+export const WHISKEY_TYPES: WhiskeyType[] = ['Bourbon', 'Tennessee', 'Scotch', 'Japanese', 'Irish', 'Rye', 'American Single Malt', 'World']
 export const TYPE_COLOR: Record<WhiskeyType, string> = {
-  Bourbon:  'bg-amber-900/40 text-amber-300 border-amber-700/40',
-  Scotch:   'bg-slate-700/40 text-slate-300 border-slate-500/40',
-  Japanese: 'bg-rose-900/30 text-rose-300 border-rose-700/40',
-  Irish:    'bg-emerald-900/30 text-emerald-300 border-emerald-700/40',
-  Rye:      'bg-orange-900/30 text-orange-300 border-orange-700/40',
+  Bourbon:               'bg-amber-900/40 text-amber-300 border-amber-700/40',
+  Tennessee:             'bg-yellow-900/40 text-yellow-300 border-yellow-700/40',
+  Scotch:                'bg-slate-700/40 text-slate-300 border-slate-500/40',
+  Japanese:              'bg-rose-900/30 text-rose-300 border-rose-700/40',
+  Irish:                 'bg-emerald-900/30 text-emerald-300 border-emerald-700/40',
+  Rye:                   'bg-orange-900/30 text-orange-300 border-orange-700/40',
+  'American Single Malt':'bg-teal-900/30 text-teal-300 border-teal-700/40',
+  World:                 'bg-violet-900/30 text-violet-300 border-violet-700/40',
 }
