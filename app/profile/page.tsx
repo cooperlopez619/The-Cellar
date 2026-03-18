@@ -18,15 +18,6 @@ const PRICE_TIER_VALUE: Record<string, number> = {
   '$': 1, '$$': 2, '$$$': 3, '$$$$': 4, '$$$$$': 5,
 }
 
-function getPricingRating(avg: number | null): string | null {
-  if (avg === null) return null
-  if (avg < 1.5) return 'Budget Sipper'
-  if (avg < 2.5) return 'Value Hunter'
-  if (avg < 3.5) return 'Premium Palate'
-  if (avg < 4.5) return 'High Roller'
-  return 'Unicorn Chaser'
-}
-
 function avgTierSymbol(avg: number | null): string | null {
   if (avg === null) return null
   const rounded = Math.max(1, Math.min(5, Math.round(avg)))
@@ -477,8 +468,8 @@ export default function SocialPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-cellar-muted text-xs">{u.pour_count} pours</span>
                     {u.fav_type && <span className="text-cellar-muted text-xs">· {u.fav_type}</span>}
-                    {getPricingRating(u.avg_price_tier) && (
-                      <span className="text-cellar-muted text-xs">· {getPricingRating(u.avg_price_tier)}</span>
+                    {avgTierSymbol(u.avg_price_tier) && (
+                      <span className="text-cellar-muted text-xs">· {avgTierSymbol(u.avg_price_tier)}</span>
                     )}
                   </div>
                 </div>

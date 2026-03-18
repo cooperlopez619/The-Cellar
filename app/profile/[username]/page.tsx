@@ -25,13 +25,9 @@ function getInitial(name: string | null): string {
   return name.trim()[0].toUpperCase()
 }
 
-function getPricingRating(avg: number | null): string | null {
+function avgTierSymbol(avg: number | null): string | null {
   if (avg === null) return null
-  if (avg < 1.5) return 'Budget Sipper'
-  if (avg < 2.5) return 'Value Hunter'
-  if (avg < 3.5) return 'Premium Palate'
-  if (avg < 4.5) return 'High Roller'
-  return 'Unicorn Chaser'
+  return '$'.repeat(Math.max(1, Math.min(5, Math.round(avg))))
 }
 
 interface UserStat {
@@ -176,7 +172,7 @@ export default function BuddyProfilePage() {
   )
 
   const { current: rank, next, progress } = getRank(profile.pour_count)
-  const pricingLabel = getPricingRating(profile.avg_price_tier)
+  const pricingLabel = avgTierSymbol(profile.avg_price_tier)
   const palette = avatarColour(profile.id)
 
   return (

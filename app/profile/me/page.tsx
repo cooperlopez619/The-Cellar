@@ -19,13 +19,9 @@ const PRICE_TIER_VALUE: Record<string, number> = {
   '$': 1, '$$': 2, '$$$': 3, '$$$$': 4, '$$$$$': 5,
 }
 
-function getPricingRating(avg: number | null): string | null {
+function avgTierSymbol(avg: number | null): string | null {
   if (avg === null) return null
-  if (avg < 1.5) return 'Budget Sipper'
-  if (avg < 2.5) return 'Value Hunter'
-  if (avg < 3.5) return 'Premium Palate'
-  if (avg < 4.5) return 'High Roller'
-  return 'Unicorn Chaser'
+  return '$'.repeat(Math.max(1, Math.min(5, Math.round(avg))))
 }
 
 export default function MyProfilePage() {
@@ -89,7 +85,7 @@ export default function MyProfilePage() {
   const displayName  = user.user_metadata?.display_name
   const location     = user.user_metadata?.location
   const avatarUrl    = user.user_metadata?.avatar_url
-  const pricingLabel = getPricingRating(avgPrice)
+  const pricingLabel = avgTierSymbol(avgPrice)
 
   const inviteUrl = typeof window !== 'undefined' && username
     ? `${window.location.origin}/add/${username}`
@@ -176,11 +172,6 @@ export default function MyProfilePage() {
           <p className="text-cellar-cream font-serif font-bold text-xl mt-1 leading-tight">
             {pricingLabel ?? (pourCount === 0 ? 'None yet' : '—')}
           </p>
-          {avgPrice !== null && (
-            <p className="text-cellar-muted text-xs mt-1">
-              Avg tier: {'$'.repeat(Math.round(avgPrice))}
-            </p>
-          )}
         </div>
       </div>
 
