@@ -44,17 +44,28 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     if (!user) return
+    const metaAvatarUrl = user.user_metadata?.avatar_url ?? ''
     setDisplayName(user.user_metadata?.display_name ?? '')
     setLocation(user.user_metadata?.location ?? '')
-    setAvatarUrl(user.user_metadata?.avatar_url ?? '')
-    // Load username from profiles table
+    setAvatarUrl(metaAvatarUrl)
+    // Load username + avatar_url from profiles table
     createClient()
       .from('profiles')
-      .select('username')
+      .select('username, avatar_url')
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.username) setUsername(data.username)
+        // If profiles.avatar_url is out of sync with user_metadata, backfill it.
+        // This heals accounts that had photos before the profiles column was added.
+        const profileAvatarUrl = (data as any)?.avatar_url ?? null
+        if (metaAvatarUrl && metaAvatarUrl !== profileAvatarUrl) {
+          createClient()
+            .from('profiles')
+            .update({ avatar_url: metaAvatarUrl })
+            .eq('id', user.id)
+            .then(() => {})
+        }
       })
   }, [user])
 
