@@ -11,18 +11,18 @@ import BFBBadge from '@/components/ui/BFBBadge'
 import SubScoreBar from '@/components/ui/SubScoreBar'
 import { ALL_SUBSCORES, calcMasterScore, type Scores } from '@/lib/scoring'
 
-const AVATAR_COLOURS = [
-  'bg-amber-700', 'bg-orange-700', 'bg-yellow-700',
-  'bg-teal-700',  'bg-emerald-700', 'bg-violet-700',
-  'bg-rose-700',  'bg-slate-600',
-]
+const AVATAR_PALETTES = [
+  { bg: 'bg-cellar-amber/20', text: 'text-cellar-amber', border: 'border-cellar-amber/30' },
+  { bg: 'bg-cellar-green/20', text: 'text-cellar-green', border: 'border-cellar-green/30' },
+  { bg: 'bg-cellar-red/20',   text: 'text-cellar-red',   border: 'border-cellar-red/30'   },
+] as const
 function avatarColour(id: string) {
   const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return AVATAR_COLOURS[n % AVATAR_COLOURS.length]
+  return AVATAR_PALETTES[n % AVATAR_PALETTES.length]
 }
-function getInitials(name: string | null): string {
+function getInitial(name: string | null): string {
   if (!name) return '?'
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  return name.trim()[0].toUpperCase()
 }
 
 function getPricingRating(avg: number | null): string | null {
@@ -177,7 +177,7 @@ export default function BuddyProfilePage() {
 
   const { current: rank, next, progress } = getRank(profile.pour_count)
   const pricingLabel = getPricingRating(profile.avg_price_tier)
-  const colour = avatarColour(profile.id)
+  const palette = avatarColour(profile.id)
 
   return (
     <div className="page">
@@ -191,8 +191,8 @@ export default function BuddyProfilePage() {
 
       {/* Avatar + identity */}
       <div className="flex flex-col items-center mb-6">
-        <div className={`w-24 h-24 rounded-full ${colour} flex items-center justify-center text-3xl font-bold text-white mb-3`}>
-          {getInitials(profile.display_name)}
+        <div className={`w-24 h-24 rounded-full ${palette.bg} ${palette.text} border-2 ${palette.border} flex items-center justify-center text-3xl font-bold mb-3`}>
+          {getInitial(profile.display_name)}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">
           {profile.display_name || 'Whiskey Enthusiast'}

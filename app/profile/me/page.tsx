@@ -133,12 +133,14 @@ export default function MyProfilePage() {
 
       {/* Avatar + identity */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden mb-3">
+        <div className="w-24 h-24 rounded-full bg-cellar-amber/20 border-2 border-cellar-amber/30 overflow-hidden mb-3">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatarUrl} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl">🥃</div>
+            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-cellar-amber">
+              {displayName ? displayName.trim()[0].toUpperCase() : '?'}
+            </div>
           )}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">

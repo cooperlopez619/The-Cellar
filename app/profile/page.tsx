@@ -33,20 +33,20 @@ function avgTierSymbol(avg: number | null): string | null {
   return '$'.repeat(rounded)
 }
 
-function getInitials(name: string | null): string {
+function getInitial(name: string | null): string {
   if (!name) return '?'
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  return name.trim()[0].toUpperCase()
 }
 
-// Seed-based colour from user id for avatar fallback
-const AVATAR_COLOURS = [
-  'bg-amber-700', 'bg-orange-700', 'bg-yellow-700',
-  'bg-teal-700',  'bg-emerald-700', 'bg-violet-700',
-  'bg-rose-700',  'bg-slate-600',
-]
+// Palette-based avatar colours matched to app design
+const AVATAR_PALETTES = [
+  { bg: 'bg-cellar-amber/20', text: 'text-cellar-amber' },
+  { bg: 'bg-cellar-green/20', text: 'text-cellar-green' },
+  { bg: 'bg-cellar-red/20',   text: 'text-cellar-red'   },
+] as const
 function avatarColour(id: string) {
   const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return AVATAR_COLOURS[n % AVATAR_COLOURS.length]
+  return AVATAR_PALETTES[n % AVATAR_PALETTES.length]
 }
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -69,11 +69,11 @@ interface Friendship {
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
-function Avatar({ name, colour, size = 'md' }: { name: string | null; colour: string; size?: 'sm' | 'md' }) {
+function Avatar({ name, palette, size = 'md' }: { name: string | null; palette: typeof AVATAR_PALETTES[number]; size?: 'sm' | 'md' }) {
   const sz = size === 'sm' ? 'w-9 h-9 text-sm' : 'w-11 h-11 text-base'
   return (
-    <div className={`${sz} ${colour} rounded-full flex items-center justify-center font-semibold text-white shrink-0`}>
-      {getInitials(name)}
+    <div className={`${sz} ${palette.bg} ${palette.text} rounded-full flex items-center justify-center font-semibold shrink-0`}>
+      {getInitial(name)}
     </div>
   )
 }
@@ -300,7 +300,7 @@ export default function SocialPage() {
           <div className="space-y-2">
             {pending.map(u => (
               <div key={u.id} className="card p-3 flex items-center gap-3">
-                <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   <p className="text-cellar-muted text-xs">{u.pour_count} pours</p>
@@ -408,7 +408,7 @@ export default function SocialPage() {
                 const isSent    = sent.includes(u.id)
                 return (
                   <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-cellar-border/40 last:border-0">
-                    <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                    <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                       <p className="text-cellar-muted text-xs">{u.pour_count} pours · {getRank(u.pour_count).current.title}</p>
@@ -450,7 +450,7 @@ export default function SocialPage() {
                 href={`/profile/${u.username ?? u.id}`}
                 className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
               >
-                <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
@@ -479,7 +479,7 @@ export default function SocialPage() {
                     <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <Avatar name={u.display_name} colour={avatarColour(u.id)} size="sm" />
+                  <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate ${u.isMe ? 'text-cellar-amber' : 'text-cellar-cream'}`}>

@@ -19,7 +19,7 @@ type FriendStatus = 'none' | 'pending_sent' | 'pending_received' | 'friends' | '
 
 function getInitials(name: string | null) {
   if (!name) return '?'
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  return name.trim()[0].toUpperCase()
 }
 
 export default function AddFriendPage() {

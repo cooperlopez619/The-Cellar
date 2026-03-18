@@ -120,17 +120,17 @@ export default function ProfileSettingsPage() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="relative w-24 h-24 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden group"
+          className="relative w-24 h-24 rounded-full bg-cellar-amber/20 border-2 border-cellar-amber/30 overflow-hidden group"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatarUrl} alt="Profile" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-cellar-muted">
-              <CameraIcon />
+            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-cellar-amber">
+              {displayName ? displayName.trim()[0].toUpperCase() : '?'}
             </div>
           )}
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity">
             {uploading
               ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               : <CameraIcon />}
