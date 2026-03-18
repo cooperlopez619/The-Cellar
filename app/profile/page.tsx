@@ -465,7 +465,7 @@ export default function SocialPage() {
       {/* ── Leaderboard ─────────────────────────────────────────────────── */}
       {leaderboard.length > 1 && (
         <div>
-          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Leaderboard</p>
+          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Friends Leaderboard</p>
           <div className="card overflow-hidden">
             {leaderboard.map((u, i) => (
               <div key={u.id}

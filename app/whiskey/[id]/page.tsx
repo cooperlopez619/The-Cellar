@@ -253,12 +253,12 @@ function WhiskeyDetailPage() {
       )}
 
       {/* Score breakdown */}
-      {(communityStats || pours.length > 0) && (
-        <div className="card p-5 mb-4">
-          <h2 className="section-title mb-4">Community Breakdown</h2>
+      <div className="card p-5 mb-4">
+        <h2 className="section-title mb-4">Community Breakdown</h2>
 
-          {/* Community overall scores */}
-          {communityStats && (
+        {communityStats && communityStats.pourCount > 0 ? (
+          <>
+            {/* Community overall scores */}
             <div className="flex items-center gap-5 mb-5">
               <div className="flex flex-col items-center gap-1">
                 <ScoreRing score={communityStats.avgScore} size={52} strokeWidth={4} />
@@ -274,32 +274,36 @@ function WhiskeyDetailPage() {
                 {communityStats.pourCount} community {communityStats.pourCount === 1 ? 'pour' : 'pours'}
               </p>
             </div>
-          )}
 
-          {/* Community sub-score breakdown */}
-          {communityStats && (
-            <>
-              <div className="border-t border-cellar-border pt-4 space-y-1 mb-4">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Taste Breakdown</p>
-                <div className="space-y-3">
-                  {TASTE_SUBSCORES.map(s => (
-                    <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
-                  ))}
-                </div>
+            {/* Community sub-score breakdown */}
+            <div className="border-t border-cellar-border pt-4 space-y-1 mb-4">
+              <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Taste Breakdown</p>
+              <div className="space-y-3">
+                {TASTE_SUBSCORES.map(s => (
+                  <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
+                ))}
               </div>
+            </div>
 
-              <div className="border-t border-cellar-border pt-4 space-y-1">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Appearance Breakdown</p>
-                <div className="space-y-3">
-                  {APPEARANCE_SUBSCORES.map(s => (
-                    <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
-                  ))}
-                </div>
+            <div className="border-t border-cellar-border pt-4 space-y-1">
+              <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Appearance Breakdown</p>
+              <div className="space-y-3">
+                {APPEARANCE_SUBSCORES.map(s => (
+                  <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
+                ))}
               </div>
-            </>
-          )}
-        </div>
-      )}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-cellar-muted/50">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            <p className="text-cellar-muted text-sm">No community ratings yet.</p>
+            <p className="text-cellar-muted/70 text-xs">Be the first to log a pour!</p>
+          </div>
+        )}
+      </div>
 
       {/* Comments */}
       <div className="card p-5 mb-4">

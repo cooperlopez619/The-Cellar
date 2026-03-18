@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '../../../hooks/useAuth'
 import ScoreSlider from '../../../components/whiskey/ScoreSlider'
@@ -33,12 +33,15 @@ function EditPourPage() {
   const [scores, setScores]       = useState<Partial<Scores>>({ ...EMPTY })
   const [priceTier, setPriceTier] = useState<PriceTier | ''>('')
   const [notes, setNotes]         = useState('')
+  const [photo, setPhoto]         = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
   const [deleting, setDeleting]   = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError]         = useState('')
   const [scoreError, setScoreError] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -67,9 +70,23 @@ function EditPourPage() {
         setScores(Object.keys(loaded).length > 0 ? loaded : { ...EMPTY })
         setPriceTier((data.price_tier_override ?? '') as PriceTier | '')
         setNotes(data.tasting_notes ?? '')
+        if (data.bottle_photo_url) setPhotoPreview(data.bottle_photo_url)
         setLoading(false)
       })
   }, [user, pour_id])
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhoto(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  function removePhoto() {
+    setPhoto(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   function handleScore(key: string, val: number) {
     setScores(prev => ({ ...prev, [key]: val }))
@@ -106,7 +123,27 @@ function EditPourPage() {
     }
     setScoreError(false)
     setSaving(true); setError('')
-    const { error: err } = await createClient()
+    const sb = createClient()
+
+    // Handle photo: upload new, preserve existing, or clear if removed
+    let bottlePhotoUrl: string | null = pour?.bottle_photo_url ?? null
+    if (photo && user) {
+      const ext  = photo.name.split('.').pop() ?? 'jpg'
+      const path = `${user.id}/${pour_id}.${ext}`
+      const { error: uploadErr } = await sb.storage.from('pours').upload(path, photo, { upsert: true })
+      if (uploadErr) {
+        setError(`Photo upload failed: ${uploadErr.message}`)
+        setSaving(false)
+        return
+      }
+      const { data: urlData } = sb.storage.from('pours').getPublicUrl(path)
+      bottlePhotoUrl = urlData.publicUrl
+    } else if (!photoPreview) {
+      // User removed the existing photo
+      bottlePhotoUrl = null
+    }
+
+    const { error: err } = await sb
       .from('pours')
       .update({
         scores,
@@ -114,6 +151,7 @@ function EditPourPage() {
         bfb_score:    bfbScore,
         tasting_notes: notes || null,
         price_tier_override: priceTier,
+        bottle_photo_url: bottlePhotoUrl,
       })
       .eq('id', pour_id)
       .eq('user_id', user!.id)
@@ -227,6 +265,43 @@ function EditPourPage() {
           <textarea rows={3} placeholder="Share your thoughts on this pour…"
             value={notes} onChange={e => setNotes(e.target.value.slice(0, 500))}
             className="input resize-none" />
+        </div>
+
+        {/* Bottle photo */}
+        <div>
+          <label className="text-cellar-muted text-xs uppercase tracking-wide mb-2 block">
+            Bottle Photo <span className="normal-case">(optional)</span>
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+            id="bottle-photo-edit"
+          />
+          {photoPreview ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoPreview} alt="Bottle preview" className="w-full rounded-xl object-cover max-h-64" />
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="absolute top-2 right-2 bg-cellar-bg/80 rounded-full p-1.5 text-cellar-muted hover:text-cellar-cream transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          ) : (
+            <label htmlFor="bottle-photo-edit"
+              className="flex flex-col items-center gap-2 p-6 rounded-xl border border-dashed border-cellar-border text-cellar-muted hover:border-cellar-amber hover:text-cellar-amber transition-colors cursor-pointer">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span className="text-sm">Take or upload a photo</span>
+            </label>
+          )}
         </div>
 
         {error && <p className="text-cellar-red text-sm">{error}</p>}
