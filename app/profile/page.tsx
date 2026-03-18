@@ -60,8 +60,20 @@ interface Friendship {
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
-function Avatar({ name, palette, size = 'md' }: { name: string | null; palette: typeof AVATAR_PALETTES[number]; size?: 'sm' | 'md' }) {
+function Avatar({ name, palette, avatarUrl, size = 'md' }: {
+  name: string | null
+  palette: typeof AVATAR_PALETTES[number]
+  avatarUrl?: string | null
+  size?: 'sm' | 'md'
+}) {
   const sz = size === 'sm' ? 'w-9 h-9 text-sm' : 'w-11 h-11 text-base'
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={avatarUrl} alt={name ?? ''} referrerPolicy="no-referrer"
+        className={`${sz} rounded-full object-cover shrink-0`} />
+    )
+  }
   return (
     <div className={`${sz} ${palette.bg} ${palette.text} rounded-full flex items-center justify-center font-semibold shrink-0`}>
       {getInitial(name)}
@@ -88,6 +100,9 @@ export default function SocialPage() {
   const [myUsername, setMyUsername] = useState<string | null>(null)
   const [copied,     setCopied]     = useState(false)
 
+  // Avatar URL map — keyed by user ID, populated from profiles.avatar_url
+  const [avatarMap, setAvatarMap] = useState<Record<string, string | null>>({})
+
   // Friendships
   const [friends,   setFriends]   = useState<UserStat[]>([])
   const [pending,   setPending]   = useState<UserStat[]>([])   // requests I received
@@ -111,6 +126,20 @@ export default function SocialPage() {
     setMyAvatar(user.user_metadata?.avatar_url ?? null)
     loadAll()
   }, [user])
+
+  // Batch-fetch avatar URLs from profiles and merge into avatarMap
+  async function fetchAvatars(ids: string[]) {
+    if (!ids.length) return
+    const sb = createClient()
+    const { data } = await sb
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', ids)
+    if (!data) return
+    const map: Record<string, string | null> = {}
+    for (const row of data) map[row.id] = (row as any).avatar_url ?? null
+    setAvatarMap(prev => ({ ...prev, ...map }))
+  }
 
   async function loadAll() {
     if (!user) return
@@ -161,6 +190,9 @@ export default function SocialPage() {
       setPending(pendingIds.map(id => statsMap[id]).filter(Boolean))
     }
 
+    // Fetch avatar URLs for all users including self
+    fetchAvatars([user.id, ...acceptedIds, ...pendingIds])
+
     setLoadingData(false)
   }
 
@@ -209,7 +241,9 @@ export default function SocialPage() {
         .or(`display_name.ilike.%${value}%,username.ilike.%${value}%`)
         .neq('id', user!.id)
         .limit(10)
-      setResults((data ?? []) as UserStat[])
+      const users = (data ?? []) as UserStat[]
+      setResults(users)
+      fetchAvatars(users.map(u => u.id))
       setSearching(false)
     }, 300)
   }
@@ -238,9 +272,9 @@ export default function SocialPage() {
         {/* Left: avatar + name + username */}
         <div className="flex flex-col items-center gap-0.5 shrink-0 w-16">
           <div className="w-14 h-14 rounded-full bg-cellar-surface border-2 border-cellar-border overflow-hidden">
-            {myAvatar ? (
+            {(avatarMap[user.id] ?? myAvatar) ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              <img src={avatarMap[user.id] ?? myAvatar!} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-2xl">🥃</div>
             )}
@@ -280,7 +314,7 @@ export default function SocialPage() {
           <div className="space-y-2">
             {pending.map(u => (
               <div key={u.id} className="card p-3 flex items-center gap-3">
-                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id]} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   <p className="text-cellar-muted text-xs">{u.pour_count} pours</p>
@@ -388,7 +422,7 @@ export default function SocialPage() {
                 const isSent    = sent.includes(u.id)
                 return (
                   <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-cellar-border/40 last:border-0">
-                    <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
+                    <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id]} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                       <p className="text-cellar-muted text-xs">{u.pour_count} pours · {getRank(u.pour_count).current.title}</p>
@@ -430,7 +464,7 @@ export default function SocialPage() {
                 href={`/profile/${u.username ?? u.id}`}
                 className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
               >
-                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id]} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
@@ -453,14 +487,7 @@ export default function SocialPage() {
                 <div className="w-7 flex items-center justify-center shrink-0">
                   <Medal rank={i + 1} />
                 </div>
-                {u.isMe && myAvatar ? (
-                  <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-cellar-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
-                )}
+                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id] ?? (u.isMe ? myAvatar : null)} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate ${u.isMe ? 'text-cellar-amber' : 'text-cellar-cream'}`}>
                     {u.isMe ? 'You' : (u.display_name ?? u.username ?? 'Unknown')}

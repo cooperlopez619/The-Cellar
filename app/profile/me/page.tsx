@@ -30,9 +30,10 @@ export default function MyProfilePage() {
   const [pourCount,  setPourCount]  = useState<number | null>(null)
   const [favType,    setFavType]    = useState<string | null>(null)
   const [avgPrice,   setAvgPrice]   = useState<number | null>(null)
-  const [username,   setUsername]   = useState<string | null>(null)
-  const [showQR,     setShowQR]     = useState(false)
-  const [copied,     setCopied]     = useState(false)
+  const [username,          setUsername]          = useState<string | null>(null)
+  const [avatarFromProfile, setAvatarFromProfile] = useState<string | null>(null)
+  const [showQR,            setShowQR]            = useState(false)
+  const [copied,            setCopied]            = useState(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/auth')
@@ -68,12 +69,18 @@ export default function MyProfilePage() {
         if (tiers.length) setAvgPrice(tiers.reduce((a, v) => a + v, 0) / tiers.length)
       })
 
-    // Username from profiles
+    // Username + avatar_url from profiles
     sb.from('profiles')
-      .select('username')
+      .select('username, avatar_url')
       .eq('id', user.id)
       .maybeSingle()
-      .then(({ data }) => setUsername(data?.username ?? null))
+      .then(({ data }) => {
+        setUsername(data?.username ?? null)
+        // Use profiles avatar as the source of truth (same as what others see)
+        if ((data as any)?.avatar_url) {
+          setAvatarFromProfile((data as any).avatar_url)
+        }
+      })
   }, [user])
 
   if (loading || !user) return (
@@ -84,7 +91,8 @@ export default function MyProfilePage() {
 
   const displayName  = user.user_metadata?.display_name
   const location     = user.user_metadata?.location
-  const avatarUrl    = user.user_metadata?.avatar_url
+  // Prefer profiles table (same source other users see); fall back to user_metadata
+  const avatarUrl    = avatarFromProfile ?? user.user_metadata?.avatar_url ?? null
   const pricingLabel = avgTierSymbol(avgPrice)
 
   const inviteUrl = typeof window !== 'undefined' && username

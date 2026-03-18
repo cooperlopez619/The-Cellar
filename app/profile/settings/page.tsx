@@ -72,13 +72,18 @@ export default function ProfileSettingsPage() {
     }
     setLocationError('')
     setSaving(true)
-    await createClient().auth.updateUser({
-      data: {
-        display_name: displayName.trim(),
-        location: location.trim(),
-        avatar_url: avatarUrl,
-      },
-    })
+    const sb = createClient()
+    await Promise.all([
+      sb.auth.updateUser({
+        data: {
+          display_name: displayName.trim(),
+          location: location.trim(),
+          avatar_url: avatarUrl,
+        },
+      }),
+      // Keep profiles table in sync so other users can see the latest avatar
+      sb.from('profiles').update({ avatar_url: avatarUrl || null }).eq('id', user.id),
+    ])
     setSaving(false)
     router.push('/profile')
   }
@@ -88,14 +93,20 @@ export default function ProfileSettingsPage() {
     if (!file || !user) return
     setUploading(true)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
     const path = `${user.id}/avatar.${ext}`
     const { error } = await supabase.storage
       .from('avatars')
-      .upload(path, file, { upsert: true })
+      .upload(path, file, { upsert: true, contentType: file.type })
     if (!error) {
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-      setAvatarUrl(`${data.publicUrl}?t=${Date.now()}`)
+      const newUrl = `${data.publicUrl}?t=${Date.now()}`
+      setAvatarUrl(newUrl)
+      // Auto-save to profiles table immediately so other users see the update
+      await Promise.all([
+        supabase.auth.updateUser({ data: { avatar_url: newUrl } }),
+        supabase.from('profiles').update({ avatar_url: newUrl }).eq('id', user.id),
+      ])
     }
     setUploading(false)
   }

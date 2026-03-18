@@ -47,11 +47,12 @@ export default function BuddyProfilePage() {
   const params = useParams()
   const usernameParam = params.username as string
 
-  const [profile,       setProfile]       = useState<UserStat | null>(null)
-  const [notFound,      setNotFound]       = useState(false)
-  const [friendState,   setFriendState]   = useState<FriendState>('loading')
-  const [friendRowId,   setFriendRowId]   = useState<string | null>(null)
-  const [confirmRemove, setConfirmRemove] = useState(false)
+  const [profile,          setProfile]          = useState<UserStat | null>(null)
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null)
+  const [notFound,         setNotFound]         = useState(false)
+  const [friendState,      setFriendState]      = useState<FriendState>('loading')
+  const [friendRowId,      setFriendRowId]      = useState<string | null>(null)
+  const [confirmRemove,    setConfirmRemove]    = useState(false)
 
   // Pours list
   const [showPours,    setShowPours]    = useState(false)
@@ -75,6 +76,9 @@ export default function BuddyProfilePage() {
       .then(({ data }) => {
         if (!data) { setNotFound(true); return }
         setProfile(data as UserStat)
+        // Fetch avatar from profiles table (user_metadata is private to each user)
+        sb.from('profiles').select('avatar_url').eq('id', (data as any).id).maybeSingle()
+          .then(({ data: p }) => setProfileAvatarUrl((p as any)?.avatar_url ?? null))
 
         if (data.id === user.id) {
           setFriendState('self')
@@ -187,8 +191,13 @@ export default function BuddyProfilePage() {
 
       {/* Avatar + identity */}
       <div className="flex flex-col items-center mb-6">
-        <div className={`w-24 h-24 rounded-full ${palette.bg} ${palette.text} border-2 ${palette.border} flex items-center justify-center text-3xl font-bold mb-3`}>
-          {getInitial(profile.display_name ?? profile.username)}
+        <div className={`w-24 h-24 rounded-full ${palette.bg} ${palette.text} border-2 ${palette.border} flex items-center justify-center text-3xl font-bold mb-3 overflow-hidden`}>
+          {profileAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={profileAvatarUrl} alt={profile.display_name ?? ''} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+          ) : (
+            getInitial(profile.display_name ?? profile.username)
+          )}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">
           {profile.display_name || (profile.username ? `@${profile.username}` : 'New Member')}
