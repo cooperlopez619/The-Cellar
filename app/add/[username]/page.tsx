@@ -140,7 +140,7 @@ export default function AddFriendPage() {
       <div className="w-full max-w-sm card p-6 flex flex-col items-center gap-3 mb-6">
         {/* Avatar placeholder */}
         <div className="w-20 h-20 rounded-full bg-cellar-amber/20 border-2 border-cellar-amber/40 flex items-center justify-center text-3xl font-semibold text-cellar-amber mb-1">
-          {getInitials(profile.display_name)}
+          {getInitials(profile.display_name ?? profile.username)}
         </div>
 
         <div className="text-center">

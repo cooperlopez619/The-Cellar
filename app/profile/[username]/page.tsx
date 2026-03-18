@@ -192,7 +192,7 @@ export default function BuddyProfilePage() {
       {/* Avatar + identity */}
       <div className="flex flex-col items-center mb-6">
         <div className={`w-24 h-24 rounded-full ${palette.bg} ${palette.text} border-2 ${palette.border} flex items-center justify-center text-3xl font-bold mb-3`}>
-          {getInitial(profile.display_name)}
+          {getInitial(profile.display_name ?? profile.username)}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">
           {profile.display_name || 'Whiskey Enthusiast'}

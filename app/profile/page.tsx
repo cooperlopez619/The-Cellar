@@ -300,7 +300,7 @@ export default function SocialPage() {
           <div className="space-y-2">
             {pending.map(u => (
               <div key={u.id} className="card p-3 flex items-center gap-3">
-                <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   <p className="text-cellar-muted text-xs">{u.pour_count} pours</p>
@@ -408,7 +408,7 @@ export default function SocialPage() {
                 const isSent    = sent.includes(u.id)
                 return (
                   <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-cellar-border/40 last:border-0">
-                    <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
+                    <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                       <p className="text-cellar-muted text-xs">{u.pour_count} pours · {getRank(u.pour_count).current.title}</p>
@@ -450,7 +450,7 @@ export default function SocialPage() {
                 href={`/profile/${u.username ?? u.id}`}
                 className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
               >
-                <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
+                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
                   {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
@@ -479,7 +479,7 @@ export default function SocialPage() {
                     <img src={myAvatar} alt="me" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <Avatar name={u.display_name} palette={avatarColour(u.id)} size="sm" />
+                  <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} size="sm" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate ${u.isMe ? 'text-cellar-amber' : 'text-cellar-cream'}`}>
