@@ -342,15 +342,18 @@ export default function MyCellarPage() {
               <FilterDropdown value={sortBy} onChange={setSortBy} options={['Price ↑', 'Price ↓']} placeholder="Name A → Z" />
             </div>
             <div className="space-y-3">
-              {sortedFavorites.map(w => (
-                <WhiskeyCard key={w.id} whiskey={w}
-                  communityScore={pourScores[w.id] ?? 0}
-                  scoreLabel="My Score"
-                  isFavorite={true}
-                  isWishlist={wishIds.has(w.id)}
-                  onToggleFavorite={() => toggleList(w, 'favorite')}
-                  onToggleWishlist={() => toggleList(w, 'wishlist')} />
-              ))}
+              {sortedFavorites.map(w => {
+                const hasMyScore = pourScores[w.id] !== undefined
+                return (
+                  <WhiskeyCard key={w.id} whiskey={w}
+                    communityScore={hasMyScore ? pourScores[w.id] : (communityStats[w.id] ?? 0)}
+                    scoreLabel={hasMyScore ? 'My Score' : (communityStats[w.id] ? 'Avg. Score' : undefined)}
+                    isFavorite={true}
+                    isWishlist={wishIds.has(w.id)}
+                    onToggleFavorite={() => toggleList(w, 'favorite')}
+                    onToggleWishlist={() => toggleList(w, 'wishlist')} />
+                )
+              })}
             </div>
           </>
         )

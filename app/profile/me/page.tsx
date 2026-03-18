@@ -144,7 +144,7 @@ export default function MyProfilePage() {
           )}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">
-          {displayName || 'Whiskey Enthusiast'}
+          {displayName || (username ? `@${username}` : 'New Member')}
         </p>
         {username && (
           <p className="text-cellar-muted text-sm mt-0.5">@{username}</p>

@@ -29,6 +29,7 @@ export default function ProfileSettingsPage() {
   const [displayName,    setDisplayName]    = useState('')
   const [username,       setUsername]       = useState('')   // read-only after set
   const [location,       setLocation]       = useState('')
+  const [nameError,      setNameError]      = useState('')
   const [locationError,  setLocationError]  = useState('')
   const [avatarUrl,      setAvatarUrl]      = useState('')
   const [saving,         setSaving]         = useState(false)
@@ -59,6 +60,11 @@ export default function ProfileSettingsPage() {
 
   async function handleSave() {
     if (!user) return
+    if (!displayName.trim()) {
+      setNameError('Display name cannot be empty')
+      return
+    }
+    setNameError('')
     const trimmedLocation = location.trim()
     if (trimmedLocation && !LOCATION_RE.test(trimmedLocation)) {
       setLocationError('Enter as City, State/Province (e.g. Nashville, TN)')
@@ -143,8 +149,9 @@ export default function ProfileSettingsPage() {
       <div className="space-y-3 mb-5">
         <div>
           <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Display Name</label>
-          <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
-            placeholder="Your name" className="input" />
+          <input type="text" value={displayName} onChange={e => { setDisplayName(e.target.value); setNameError('') }}
+            placeholder="Your name" className={`input ${nameError ? 'border-red-500/70' : ''}`} />
+          {nameError && <p className="text-red-400 text-xs mt-1">{nameError}</p>}
         </div>
 
         {/* Username — permanent, read-only */}

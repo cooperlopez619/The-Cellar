@@ -33,6 +33,7 @@ function WhiskeyDetailPage() {
     avgBottle: number; avgLabel: number
   } | null>(null)
   const [votes, setVotes]           = useState<VoteMap>({})
+  const [contributors, setContributors] = useState<Record<string, { display_name: string | null; username: string | null }>>({})
   const [isFavorite, setIsFavorite] = useState(false)
   const [isWishlist, setIsWishlist] = useState(false)
   const [loading, setLoading]       = useState(true)
@@ -46,7 +47,7 @@ function WhiskeyDetailPage() {
     const sb = createClient()
     Promise.all([
       sb.from('whiskeys').select('*').eq('id', id).single(),
-      sb.from('pours').select('*').eq('whiskey_id', id).eq('user_id', user.id),
+      sb.from('pours').select('*').eq('whiskey_id', id).order('created_at', { ascending: false }),
       sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', id),
       sb.from('whiskey_community_stats').select('avg_score, avg_bfb, pour_count, avg_nose, avg_palate, avg_finish, avg_bottle, avg_label').eq('whiskey_id', id).maybeSingle(),
     ]).then(async ([{ data: w }, { data: p }, { data: lists }, { data: community }]) => {
@@ -55,6 +56,18 @@ function WhiskeyDetailPage() {
       setPours(pourList)
       setIsFavorite(lists?.some(l => l.list_type === 'favorite') ?? false)
       setIsWishlist(lists?.some(l => l.list_type === 'wishlist') ?? false)
+
+      // Fetch contributor display info for all users who have a pour on this whiskey
+      const userIds = [...new Set(pourList.map((x: Pour) => x.user_id))]
+      if (userIds.length) {
+        const { data: userData } = await sb
+          .from('user_stats')
+          .select('id, display_name, username')
+          .in('id', userIds)
+        const cmap: Record<string, { display_name: string | null; username: string | null }> = {}
+        for (const u of userData ?? []) cmap[u.id] = { display_name: u.display_name, username: u.username }
+        setContributors(cmap)
+      }
       if (community) {
         const c = community as Record<string, number | null>
         setCommunityStats({
@@ -157,10 +170,12 @@ function WhiskeyDetailPage() {
   )
   if (!whiskey) return <div className="page text-cellar-muted text-center pt-20">Whiskey not found.</div>
 
-  const avgMaster = pours.length
-    ? +(pours.reduce((a, p) => a + (p.master_score ?? 0), 0) / pours.length).toFixed(2) : 0
-  const avgBFB = pours.length
-    ? +(pours.reduce((a, p) => a + (p.bfb_score ?? 0), 0) / pours.length).toFixed(2) : 0
+  // Separate my pours from all pours — used for edit button and personal score ring
+  const myPours = pours.filter(p => p.user_id === user?.id)
+  const avgMaster = myPours.length
+    ? +(myPours.reduce((a, p) => a + (p.master_score ?? 0), 0) / myPours.length).toFixed(2) : 0
+  const avgBFB = myPours.length
+    ? +(myPours.reduce((a, p) => a + (p.bfb_score ?? 0), 0) / myPours.length).toFixed(2) : 0
 
   function communitySubScore(key: string): number {
     if (!communityStats) return 0
@@ -230,9 +245,9 @@ function WhiskeyDetailPage() {
         </div>
       </div>
 
-      {/* Log / Edit pour button */}
-      {pours.length > 0 ? (
-        <Link href={`/edit/${pours[0].id}`} className="btn-primary mb-4 block text-center">Edit Pour</Link>
+      {/* Log / Edit pour button — scoped to the current user's most recent pour */}
+      {myPours.length > 0 ? (
+        <Link href={`/edit/${myPours[0].id}`} className="btn-primary mb-4 block text-center">Edit Pour</Link>
       ) : (
         <Link href={`/log/${whiskey.id}`} className="btn-primary mb-4 block text-center">Log a Pour</Link>
       )}
@@ -293,8 +308,14 @@ function WhiskeyDetailPage() {
           <div className="space-y-5">
             {commentedPours.map(p => {
               const v = votes[p.id] ?? { up: 0, down: 0, mine: null }
+              const contributor = contributors[p.user_id]
+              const isMe = p.user_id === user?.id
+              const authorName = isMe
+                ? 'You'
+                : contributor?.display_name ?? (contributor?.username ? `@${contributor.username}` : 'Community Member')
               return (
                 <div key={p.id} className="border-l-2 border-cellar-amber/40 pl-3">
+                  <p className="text-cellar-amber text-xs font-medium mb-1">{authorName}</p>
                   <p className="text-cellar-cream text-sm leading-relaxed">&ldquo;{p.tasting_notes}&rdquo;</p>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">

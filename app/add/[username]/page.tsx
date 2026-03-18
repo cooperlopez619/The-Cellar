@@ -83,13 +83,27 @@ export default function AddFriendPage() {
   async function sendRequest() {
     if (!user || !profile) return
     setActing(true)
-    // Invite link = the profile owner already expressed intent to be friends,
-    // so skip the pending state and create an accepted friendship immediately.
-    await createClient().from('friendships').insert({
-      requester_id: user.id,
-      addressee_id: profile.id,
-      status: 'accepted',
-    })
+    const sb = createClient()
+    // Check for any existing friendship row before inserting to avoid duplicates
+    const { data: existing } = await sb
+      .from('friendships')
+      .select('id, status')
+      .or(`and(requester_id.eq.${user.id},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${user.id})`)
+      .maybeSingle()
+    if (existing) {
+      // Row already exists — just make sure it's accepted
+      if ((existing as any).status !== 'accepted') {
+        await sb.from('friendships').update({ status: 'accepted' }).eq('id', (existing as any).id)
+      }
+    } else {
+      // Invite link = the profile owner already expressed intent to be friends,
+      // so skip the pending state and create an accepted friendship immediately.
+      await sb.from('friendships').insert({
+        requester_id: user.id,
+        addressee_id: profile.id,
+        status: 'accepted',
+      })
+    }
     setStatus('friends')
     setActing(false)
   }

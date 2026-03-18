@@ -195,7 +195,7 @@ export default function BuddyProfilePage() {
           {getInitial(profile.display_name ?? profile.username)}
         </div>
         <p className="font-serif text-cellar-cream text-xl font-semibold">
-          {profile.display_name || 'Whiskey Enthusiast'}
+          {profile.display_name || (profile.username ? `@${profile.username}` : 'New Member')}
         </p>
         {profile.username && (
           <p className="text-cellar-muted text-sm mt-0.5">@{profile.username}</p>
