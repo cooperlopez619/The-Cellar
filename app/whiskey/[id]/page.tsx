@@ -27,7 +27,11 @@ function WhiskeyDetailPage() {
   const { user, loading: authLoading } = useAuth()
   const [whiskey, setWhiskey]       = useState<Whiskey | null>(null)
   const [pours, setPours]           = useState<Pour[]>([])
-  const [communityStats, setCommunityStats] = useState<{ avgScore: number; avgBFB: number; pourCount: number } | null>(null)
+  const [communityStats, setCommunityStats] = useState<{
+    avgScore: number; avgBFB: number; pourCount: number
+    avgNose: number; avgPalate: number; avgFinish: number
+    avgBottle: number; avgLabel: number
+  } | null>(null)
   const [votes, setVotes]           = useState<VoteMap>({})
   const [isFavorite, setIsFavorite] = useState(false)
   const [isWishlist, setIsWishlist] = useState(false)
@@ -44,7 +48,7 @@ function WhiskeyDetailPage() {
       sb.from('whiskeys').select('*').eq('id', id).single(),
       sb.from('pours').select('*').eq('whiskey_id', id).eq('user_id', user.id),
       sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', id),
-      sb.from('whiskey_community_stats').select('avg_score, avg_bfb, pour_count').eq('whiskey_id', id).maybeSingle(),
+      sb.from('whiskey_community_stats').select('avg_score, avg_bfb, pour_count, avg_nose, avg_palate, avg_finish, avg_bottle, avg_label').eq('whiskey_id', id).maybeSingle(),
     ]).then(async ([{ data: w }, { data: p }, { data: lists }, { data: community }]) => {
       setWhiskey(w)
       const pourList = p ?? []
@@ -52,10 +56,16 @@ function WhiskeyDetailPage() {
       setIsFavorite(lists?.some(l => l.list_type === 'favorite') ?? false)
       setIsWishlist(lists?.some(l => l.list_type === 'wishlist') ?? false)
       if (community) {
+        const c = community as Record<string, number | null>
         setCommunityStats({
-          avgScore:  community.avg_score  ?? 0,
-          avgBFB:    community.avg_bfb    ?? 0,
-          pourCount: community.pour_count ?? 0,
+          avgScore:  c.avg_score  ?? 0,
+          avgBFB:    c.avg_bfb    ?? 0,
+          pourCount: c.pour_count ?? 0,
+          avgNose:   c.avg_nose   ?? 0,
+          avgPalate: c.avg_palate ?? 0,
+          avgFinish: c.avg_finish ?? 0,
+          avgBottle: c.avg_bottle ?? 0,
+          avgLabel:  c.avg_label  ?? 0,
         })
       }
 
@@ -152,9 +162,16 @@ function WhiskeyDetailPage() {
   const avgBFB = pours.length
     ? +(pours.reduce((a, p) => a + (p.bfb_score ?? 0), 0) / pours.length).toFixed(2) : 0
 
-  const avgSubScore = (key: string): number => {
-    const vals = pours.map(p => (p.scores as Record<string, number>)?.[key]).filter(v => v > 0)
-    return vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : 0
+  function communitySubScore(key: string): number {
+    if (!communityStats) return 0
+    const map: Record<string, number> = {
+      nose:   communityStats.avgNose,
+      palate: communityStats.avgPalate,
+      finish: communityStats.avgFinish,
+      bottle: communityStats.avgBottle,
+      label:  communityStats.avgLabel,
+    }
+    return map[key] ?? 0
   }
 
   const commentedPours = pours.filter(p => p.tasting_notes && p.tasting_notes.trim())
@@ -244,23 +261,23 @@ function WhiskeyDetailPage() {
             </div>
           )}
 
-          {/* User's personal sub-score breakdown */}
-          {pours.length > 0 && (
+          {/* Community sub-score breakdown */}
+          {communityStats && (
             <>
               <div className="border-t border-cellar-border pt-4 space-y-1 mb-4">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">My Taste Breakdown</p>
+                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Taste Breakdown</p>
                 <div className="space-y-3">
                   {TASTE_SUBSCORES.map(s => (
-                    <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+                    <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
                   ))}
                 </div>
               </div>
 
               <div className="border-t border-cellar-border pt-4 space-y-1">
-                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">My Appearance Breakdown</p>
+                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Avg. Appearance Breakdown</p>
                 <div className="space-y-3">
                   {APPEARANCE_SUBSCORES.map(s => (
-                    <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+                    <SubScoreBar key={s.key} label={s.label} score={communitySubScore(s.key)} />
                   ))}
                 </div>
               </div>
