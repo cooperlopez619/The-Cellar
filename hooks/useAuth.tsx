@@ -8,7 +8,7 @@ interface AuthContextValue {
   loading:          boolean
   signUp:           (email: string, password: string) => Promise<{ error: unknown }>
   signIn:           (email: string, password: string) => Promise<{ error: unknown }>
-  signInWithOAuth:  (provider: Provider) => Promise<{ error: unknown }>
+  signInWithOAuth:  (provider: Provider, next?: string) => Promise<{ error: unknown }>
   signOut:          () => Promise<void>
 }
 
@@ -35,11 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, loading,
       signUp:  (e, p) => supabase.auth.signUp({ email: e, password: p }),
       signIn:  (e, p) => supabase.auth.signInWithPassword({ email: e, password: p }),
-      signInWithOAuth: (provider) =>
+      signInWithOAuth: (provider, next) =>
         supabase.auth.signInWithOAuth({
           provider,
-          options: { 
-            redirectTo: `${window.location.origin}/auth/callback`,
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`,
             scopes: provider === 'azure' ? 'openid profile email' : undefined,
           },
         }),

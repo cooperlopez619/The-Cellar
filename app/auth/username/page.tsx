@@ -1,15 +1,17 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import CellarLogo from '@/components/ui/CellarLogo'
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
-export default function ClaimUsernamePage() {
+function ClaimUsernamePageInner() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') ?? '/'
 
   const [displayName,      setDisplayName]      = useState('')
   const [username,         setUsername]         = useState('')
@@ -30,7 +32,7 @@ export default function ClaimUsernamePage() {
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.username) router.replace('/')
+        if (data?.username) router.replace(next)
       })
     // Pre-fill display name from OAuth provider if available
     const oauthName = user.user_metadata?.full_name || user.user_metadata?.name || ''
@@ -82,7 +84,7 @@ export default function ClaimUsernamePage() {
       return
     }
     await sb.auth.updateUser({ data: { display_name: name } })
-    router.push('/')
+    router.push(next)
   }
 
   if (authLoading) return (
@@ -165,5 +167,13 @@ export default function ClaimUsernamePage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function ClaimUsernamePage() {
+  return (
+    <Suspense>
+      <ClaimUsernamePageInner />
+    </Suspense>
   )
 }

@@ -22,7 +22,11 @@ export async function GET(request: NextRequest) {
 
       if (!profile?.username) {
         // New OAuth user — must claim a username before entering the app
-        return NextResponse.redirect(`${origin}/auth/username`)
+        // Preserve the original destination so we can redirect there after setup
+        const usernameUrl = next !== '/'
+          ? `${origin}/auth/username?next=${encodeURIComponent(next)}`
+          : `${origin}/auth/username`
+        return NextResponse.redirect(usernameUrl)
       }
 
       return NextResponse.redirect(`${origin}${next}`)

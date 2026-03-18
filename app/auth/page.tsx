@@ -167,7 +167,8 @@ function AuthPageInner() {
   async function handleOAuth(provider: 'google' | 'azure') {
     setError('')
     setOAuthLoading(provider)
-    const { error: err } = await signInWithOAuth(provider)
+    const next = redirectTo !== '/' ? redirectTo : undefined
+    const { error: err } = await signInWithOAuth(provider, next)
     if (err) { setError((err as Error).message); setOAuthLoading(null) }
   }
 
