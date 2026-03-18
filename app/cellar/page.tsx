@@ -103,6 +103,7 @@ export default function MyCellarPage() {
   const [pours, setPours] = useState<Pour[]>([])
   const [favorites, setFavorites] = useState<Whiskey[]>([])
   const [wishlist, setWishlist] = useState<Whiskey[]>([])
+  const [communityStats, setCommunityStats] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('pours')
   const [typeFilter, setType] = useState('')
@@ -119,10 +120,14 @@ export default function MyCellarPage() {
     Promise.all([
       supabase.from('pours').select('*, whiskeys(*)').eq('user_id', user.id).order('master_score', { ascending: false }),
       supabase.from('user_lists').select('whiskey_id, list_type, whiskeys(*)').eq('user_id', user.id),
-    ]).then(([{ data: poursData }, { data: listsData }]) => {
+      supabase.from('whiskey_community_stats').select('whiskey_id, avg_score'),
+    ]).then(([{ data: poursData }, { data: listsData }, { data: communityData }]) => {
       setPours(poursData ?? [])
       setFavorites((listsData ?? []).filter(l => l.list_type === 'favorite').map(l => l.whiskeys as unknown as Whiskey))
       setWishlist((listsData ?? []).filter(l => l.list_type === 'wishlist').map(l => l.whiskeys as unknown as Whiskey))
+      const statsMap: Record<string, number> = {}
+      for (const row of communityData ?? []) statsMap[row.whiskey_id] = row.avg_score ?? 0
+      setCommunityStats(statsMap)
       setLoading(false)
     })
   }, [user])
@@ -153,6 +158,9 @@ export default function MyCellarPage() {
 
   const favIds = new Set(favorites.map(w => w.id))
   const wishIds = new Set(wishlist.map(w => w.id))
+  // Personal score lookup by whiskey_id
+  const pourScores: Record<string, number> = {}
+  for (const p of pours) pourScores[p.whiskey_id] = p.master_score ?? 0
 
   const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
 
@@ -257,7 +265,10 @@ export default function MyCellarPage() {
                       onKeyDown={e => e.key === 'Enter' && setExpanded(isOpen ? null : pour.id)}
                       className="w-full text-left p-4 cursor-pointer">
                       <div className="flex items-start gap-3">
-                        <div className="shrink-0 pt-1"><ScoreRing score={pour.master_score ?? calcMasterScore((pour.scores ?? {}) as Partial<Scores>)} size={52} strokeWidth={4} /></div>
+                        <div className="shrink-0 pt-1 flex flex-col items-center gap-0.5">
+                          <ScoreRing score={pour.master_score ?? calcMasterScore((pour.scores ?? {}) as Partial<Scores>)} size={52} strokeWidth={4} />
+                          <p className="text-[9px] text-cellar-muted leading-none">My Score</p>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p onClick={e => { e.stopPropagation(); w && router.push(`/whiskey/${w.id}`) }}
                             className="font-serif text-cellar-cream font-semibold text-sm leading-tight truncate">
@@ -333,6 +344,8 @@ export default function MyCellarPage() {
             <div className="space-y-3">
               {sortedFavorites.map(w => (
                 <WhiskeyCard key={w.id} whiskey={w}
+                  communityScore={pourScores[w.id] ?? 0}
+                  scoreLabel="My Score"
                   isFavorite={true}
                   isWishlist={wishIds.has(w.id)}
                   onToggleFavorite={() => toggleList(w, 'favorite')}
@@ -358,6 +371,8 @@ export default function MyCellarPage() {
             <div className="space-y-3">
               {sortedWishlist.map(w => (
                 <WhiskeyCard key={w.id} whiskey={w}
+                  communityScore={communityStats[w.id] ?? 0}
+                  scoreLabel="Avg. Score"
                   isFavorite={favIds.has(w.id)}
                   isWishlist={true}
                   onToggleFavorite={() => toggleList(w, 'favorite')}

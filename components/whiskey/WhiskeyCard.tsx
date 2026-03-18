@@ -26,6 +26,7 @@ interface Props {
   whiskey: Whiskey
   communityScore?: number
   communityBFB?: number
+  scoreLabel?: string
   isFavorite?: boolean
   isWishlist?: boolean
   onToggleFavorite?: () => void
@@ -34,14 +35,16 @@ interface Props {
 
 export default function WhiskeyCard({
   whiskey, communityScore = 0, communityBFB = 0,
+  scoreLabel,
   isFavorite = false, isWishlist = false,
   onToggleFavorite, onToggleWishlist,
 }: Props) {
   return (
     <Link href={`/whiskey/${whiskey.id}`} className="card block p-4 active:scale-[0.98] transition-transform">
       <div className="flex items-start gap-3">
-        <div className="shrink-0 pt-1">
+        <div className="shrink-0 pt-1 flex flex-col items-center gap-0.5">
           <ScoreRing score={communityScore} size={56} strokeWidth={4} />
+          {scoreLabel && <p className="text-[9px] text-cellar-muted leading-none">{scoreLabel}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-serif text-cellar-cream font-semibold text-base leading-tight truncate">{whiskey.name}</h3>

@@ -267,6 +267,7 @@ export default function CatalogPage() {
                   <WhiskeyCard whiskey={w}
                     communityScore={stats[w.id]?.avgScore ?? 0}
                     communityBFB={stats[w.id]?.avgBFB ?? 0}
+                    scoreLabel="Avg. Score"
                     isFavorite={favorites.has(w.id)}
                     isWishlist={wishlists.has(w.id)}
                     onToggleFavorite={() => toggleList(w.id, 'favorite')}
