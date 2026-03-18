@@ -22,9 +22,12 @@ export default function UsernameGate() {
   useEffect(() => {
     if (loading || !user || isAuthPage) return
 
+    // Build the username-setup URL — preserve current page so we return here after.
+    const returnTo = pathname !== '/' ? `/auth/username?next=${encodeURIComponent(pathname)}` : '/auth/username'
+
     // If we already checked for this user this session, use the cached result
     if (_checkedUserId === user.id) {
-      if (!_hasUsername) nav.replace('/auth/username')
+      if (!_hasUsername) nav.replace(returnTo)
       return
     }
 
@@ -36,7 +39,7 @@ export default function UsernameGate() {
       .then(({ data }) => {
         _checkedUserId = user.id
         _hasUsername = !!data?.username
-        if (!_hasUsername) nav.replace('/auth/username')
+        if (!_hasUsername) nav.replace(returnTo)
       })
   }, [user, loading, isAuthPage])
 

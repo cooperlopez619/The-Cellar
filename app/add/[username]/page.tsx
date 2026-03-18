@@ -47,15 +47,32 @@ export default function AddFriendPage() {
     if (!user) return
     const sb = createClient()
 
-    // Look up the profile by username
-    const { data: prof } = await sb
+    // Look up the profile by username — try user_stats first (has pour count),
+    // fall back to profiles so the invite page works even for brand-new users.
+    let prof: ProfileData | null = null
+
+    const { data: statsRow } = await sb
       .from('user_stats')
-      .select('*')
+      .select('id, display_name, username, pour_count, fav_type')
       .eq('username', username)
       .maybeSingle()
 
+    if (statsRow) {
+      prof = statsRow as ProfileData
+    } else {
+      // User exists but isn't in user_stats yet (e.g. zero pours logged)
+      const { data: profileRow } = await sb
+        .from('profiles')
+        .select('id, display_name, username')
+        .eq('username', username)
+        .maybeSingle()
+      if (profileRow) {
+        prof = { ...profileRow, pour_count: 0, fav_type: null }
+      }
+    }
+
     if (!prof) { setNotFound(true); setPageLoading(false); return }
-    setProfile(prof as ProfileData)
+    setProfile(prof)
 
     // Am I looking at myself?
     if (prof.id === user.id) { setStatus('self'); setPageLoading(false); return }
