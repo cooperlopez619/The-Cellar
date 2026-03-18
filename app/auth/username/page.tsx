@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../../hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import CellarLogo from '@/components/ui/CellarLogo'
+import { markUsernameSet } from '@/components/ui/UsernameGate'
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
@@ -84,6 +85,7 @@ function ClaimUsernamePageInner() {
       return
     }
     await sb.auth.updateUser({ data: { display_name: name } })
+    markUsernameSet()
     router.push(next)
   }
 

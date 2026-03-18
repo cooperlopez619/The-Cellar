@@ -57,17 +57,6 @@ function WhiskeyDetailPage() {
       setIsFavorite(lists?.some(l => l.list_type === 'favorite') ?? false)
       setIsWishlist(lists?.some(l => l.list_type === 'wishlist') ?? false)
 
-      // Fetch contributor display info for all users who have a pour on this whiskey
-      const userIds = [...new Set(pourList.map((x: Pour) => x.user_id))]
-      if (userIds.length) {
-        const { data: userData } = await sb
-          .from('user_stats')
-          .select('id, display_name, username')
-          .in('id', userIds)
-        const cmap: Record<string, { display_name: string | null; username: string | null }> = {}
-        for (const u of userData ?? []) cmap[u.id] = { display_name: u.display_name, username: u.username }
-        setContributors(cmap)
-      }
       if (community) {
         const c = community as Record<string, number | null>
         setCommunityStats({
@@ -82,23 +71,35 @@ function WhiskeyDetailPage() {
         })
       }
 
-      // Fetch votes for all pours on this whiskey
+      // Fetch contributors + votes in parallel (previously sequential)
+      const userIds = [...new Set(pourList.map((x: Pour) => x.user_id))]
       const pourIds = pourList.map((x: Pour) => x.id)
-      if (pourIds.length) {
-        const { data: voteRows } = await sb
-          .from('comment_votes')
-          .select('pour_id, user_id, vote')
-          .in('pour_id', pourIds)
 
-        const map: VoteMap = {}
-        for (const row of (voteRows ?? [])) {
-          if (!map[row.pour_id]) map[row.pour_id] = { up: 0, down: 0, mine: null }
-          if (row.vote === 1)  map[row.pour_id].up++
-          if (row.vote === -1) map[row.pour_id].down++
-          if (row.user_id === user.id) map[row.pour_id].mine = row.vote
-        }
-        setVotes(map)
-      }
+      await Promise.all([
+        // Contributor display names
+        (async () => {
+          if (!userIds.length) return
+          const { data: userData } = await sb
+            .from('user_stats').select('id, display_name, username').in('id', userIds)
+          const cmap: Record<string, { display_name: string | null; username: string | null }> = {}
+          for (const u of userData ?? []) cmap[u.id] = { display_name: u.display_name, username: u.username }
+          setContributors(cmap)
+        })(),
+        // Comment votes
+        (async () => {
+          if (!pourIds.length) return
+          const { data: voteRows } = await sb
+            .from('comment_votes').select('pour_id, user_id, vote').in('pour_id', pourIds)
+          const map: VoteMap = {}
+          for (const row of (voteRows ?? [])) {
+            if (!map[row.pour_id]) map[row.pour_id] = { up: 0, down: 0, mine: null }
+            if (row.vote === 1)  map[row.pour_id].up++
+            if (row.vote === -1) map[row.pour_id].down++
+            if (row.user_id === user.id) map[row.pour_id].mine = row.vote
+          }
+          setVotes(map)
+        })(),
+      ])
 
       setLoading(false)
     })

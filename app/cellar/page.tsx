@@ -191,8 +191,36 @@ export default function MyCellarPage() {
     : null
 
   if (authLoading || loading) return (
-    <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
+    <div className="page animate-pulse">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="h-7 bg-cellar-surface rounded-lg w-28" />
+        <div className="flex gap-2">
+          <div className="h-7 bg-cellar-surface rounded-full w-24" />
+          <div className="h-7 w-7 bg-cellar-surface rounded-full" />
+        </div>
+      </div>
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="card p-3 h-[62px]" />
+        ))}
+      </div>
+      {/* Tab bar */}
+      <div className="h-10 bg-cellar-surface rounded-xl mb-4" />
+      {/* Pour card skeletons */}
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="card p-4 flex items-center gap-3">
+            <div className="w-[52px] h-[52px] rounded-full bg-cellar-surface shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-cellar-surface rounded-lg" style={{ width: `${60 + (i % 3) * 13}%` }} />
+              <div className="h-3 bg-cellar-surface rounded-lg w-1/3" />
+              <div className="h-5 bg-cellar-surface rounded-full w-14" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 

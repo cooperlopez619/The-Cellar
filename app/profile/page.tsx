@@ -118,13 +118,6 @@ export default function SocialPage() {
   useEffect(() => {
     if (!user) return
     setMyAvatar(user.user_metadata?.avatar_url ?? null)
-    // Load username from profiles table
-    createClient()
-      .from('profiles')
-      .select('username')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setMyUsername(data?.username ?? null))
     loadAll()
   }, [user])
 
@@ -132,19 +125,15 @@ export default function SocialPage() {
     if (!user) return
     const sb = createClient()
 
-    // Fetch my stats row
-    const { data: me } = await sb
-      .from('user_stats')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
-    setMyStats(me ?? null)
+    // Fetch my stats + all friendship rows in parallel (saves one serial round-trip)
+    const [{ data: me }, { data: fs }] = await Promise.all([
+      sb.from('user_stats').select('*').eq('id', user.id).maybeSingle(),
+      sb.from('friendships').select('*').or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
+    ])
 
-    // Fetch all my friendship rows
-    const { data: fs } = await sb
-      .from('friendships')
-      .select('*')
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+    setMyStats(me ?? null)
+    // username lives on the user_stats row — no separate profiles fetch needed
+    setMyUsername((me as UserStat | null)?.username ?? null)
 
     const rows = (fs ?? []) as Friendship[]
 

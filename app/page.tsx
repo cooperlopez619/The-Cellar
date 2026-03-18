@@ -13,6 +13,14 @@ import { createClient } from '@/lib/supabase/client'
 
 type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
+// Module-level cache — survives navigation within the session.
+// Whiskeys and stats are cached (they rarely change); lists are always refreshed.
+let _catalogCache: {
+  uid: string
+  whiskeys: Whiskey[]
+  stats: Stats
+} | null = null
+
 function FilterDropdown({ value, onChange, options, placeholder }: {
   value: string
   onChange: (v: string) => void
@@ -94,14 +102,33 @@ export default function CatalogPage() {
   useEffect(() => {
     if (!user) return
     const supabase = createClient()
+
+    async function fetchLists() {
+      const { data: lists } = await supabase
+        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
+      if (lists) {
+        setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
+        setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
+      }
+    }
+
+    // If we have a cache for this user, show it immediately and only refresh lists
+    if (_catalogCache?.uid === user.id) {
+      setWhiskeys(_catalogCache.whiskeys)
+      setStats(_catalogCache.stats)
+      setLoading(false)
+      fetchLists() // silently refresh favorites/wishlists in background
+      return
+    }
+
     async function load() {
-      // Kick off user data fetches immediately — no whiskey IDs needed
-      const poursPromise = supabase
+      // Fire community stats + user lists immediately in parallel with whiskey fetch
+      const statsPromise = supabase
         .from('whiskey_community_stats').select('whiskey_id, avg_score, avg_bfb')
       const listsPromise = supabase
         .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
 
-      // Fetch whiskeys (paginated)
+      // Fetch all whiskeys (paginated if needed)
       let all: Whiskey[] = []
       let from = 0
       const PAGE = 1000
@@ -114,8 +141,8 @@ export default function CatalogPage() {
         from += PAGE
       }
 
-      // Wait for user data (was running in parallel with whiskey pagination)
-      const [{ data: pours }, { data: lists }] = await Promise.all([poursPromise, listsPromise])
+      // Resolve user data (was running in parallel with whiskey pagination)
+      const [{ data: pours }, { data: lists }] = await Promise.all([statsPromise, listsPromise])
 
       if (lists) {
         setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
@@ -124,13 +151,12 @@ export default function CatalogPage() {
 
       const out: Stats = {}
       for (const row of pours ?? []) {
-        out[row.whiskey_id] = {
-          avgScore: row.avg_score ?? 0,
-          avgBFB:   row.avg_bfb ?? 0,
-        }
+        out[row.whiskey_id] = { avgScore: row.avg_score ?? 0, avgBFB: row.avg_bfb ?? 0 }
       }
 
-      // Set everything at once so the page renders with complete data
+      // Cache whiskeys + stats for instant return visits
+      _catalogCache = { uid: user!.id, whiskeys: all, stats: out }
+
       setWhiskeys(all)
       setStats(out)
       setLoading(false)
@@ -205,12 +231,6 @@ export default function CatalogPage() {
     measureElement: el => el.getBoundingClientRect().height,
   })
 
-  if (authLoading || !user) return (
-    <div className="min-h-screen bg-cellar-bg flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
   return (
     <div className="page">
       <div className="flex items-center justify-between mb-5">
@@ -236,8 +256,17 @@ export default function CatalogPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-3 animate-pulse">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="card p-4 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-cellar-surface shrink-0" />
+              <div className="flex-1 space-y-2.5">
+                <div className="h-4 bg-cellar-surface rounded-lg" style={{ width: `${55 + (i % 4) * 12}%` }} />
+                <div className="h-3 bg-cellar-surface rounded-lg w-1/3" />
+                <div className="h-5 bg-cellar-surface rounded-full w-16" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
