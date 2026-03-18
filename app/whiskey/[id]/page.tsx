@@ -211,12 +211,14 @@ function WhiskeyDetailPage() {
             {avgBFB > 0 && <div className="mt-2"><BFBBadge score={avgBFB} /></div>}
           </div>
         </div>
-        {communityStats && communityStats.pourCount > 0 && (
-          <p className="text-cellar-muted text-xs mt-3">
-            {communityStats.pourCount} community {communityStats.pourCount === 1 ? 'pour' : 'pours'}
-          </p>
-        )}
       </div>
+
+      {/* Log / Edit pour button */}
+      {pours.length > 0 ? (
+        <Link href={`/edit/${pours[0].id}`} className="btn-primary mb-4 block text-center">Edit Pour</Link>
+      ) : (
+        <Link href={`/log/${whiskey.id}`} className="btn-primary mb-4 block text-center">Log a Pour</Link>
+      )}
 
       {/* Score breakdown */}
       {(communityStats || pours.length > 0) && (
@@ -231,11 +233,14 @@ function WhiskeyDetailPage() {
                 <p className="text-[9px] text-cellar-muted leading-none">Avg. Score</p>
               </div>
               {communityStats.avgBFB > 0 && (
-                <div className="flex flex-col items-center gap-1">
-                  <ScoreRing score={communityStats.avgBFB} size={52} strokeWidth={4} />
+                <div className="flex flex-col items-center gap-1.5">
+                  <BFBBadge score={communityStats.avgBFB} />
                   <p className="text-[9px] text-cellar-muted leading-none">Avg. BFB</p>
                 </div>
               )}
+              <p className="text-cellar-muted text-xs ml-auto self-end pb-0.5">
+                {communityStats.pourCount} community {communityStats.pourCount === 1 ? 'pour' : 'pours'}
+              </p>
             </div>
           )}
 
@@ -314,7 +319,6 @@ function WhiskeyDetailPage() {
         )}
       </div>
 
-      <Link href={`/log/${whiskey.id}`} className="btn-primary">Log a Pour</Link>
     </div>
   )
 }
