@@ -82,11 +82,12 @@ function AuthPageInner() {
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOAuthLoading] = useState<string | null>(null)
 
-  // Username (signup only)
+  // Username + display name (signup only)
   const [username,          setUsername]          = useState('')
   const [usernameError,     setUsernameError]     = useState('')
   const [usernameOk,        setUsernameOk]        = useState(false)
   const [checkingUsername,  setCheckingUsername]  = useState(false)
+  const [displayName,       setDisplayName]       = useState('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { signIn, signUp, signInWithOAuth } = useAuth()
@@ -127,6 +128,7 @@ function AuthPageInner() {
     setError('')
 
     if (tab === 'signup') {
+      if (!displayName.trim()) { setError('Please enter your name'); return }
       if (pw !== confirm) { setError('Passwords do not match.'); return }
       if (!username)       { setUsernameError('Choose a username'); return }
       if (!USERNAME_RE.test(username)) { setUsernameError('Invalid username'); return }
@@ -147,13 +149,14 @@ function AuthPageInner() {
         // 2. Sign in immediately
         const { error: signInErr } = await signIn(email, pw)
         if (signInErr) { setError((signInErr as Error).message); return }
-        // 3. Claim username
+        // 3. Claim username + save display name
         const sb = createClient()
         const { data: { user } } = await sb.auth.getUser()
         if (user) {
+          const name = displayName.trim() || username
           await Promise.all([
-            sb.from('profiles').update({ username }).eq('id', user.id),
-            sb.auth.updateUser({ data: { display_name: username } }),
+            sb.from('profiles').update({ username, display_name: name }).eq('id', user.id),
+            sb.auth.updateUser({ data: { display_name: name } }),
           ])
         }
         router.push(redirectTo)
@@ -176,6 +179,7 @@ function AuthPageInner() {
     setUsername('')
     setUsernameError('')
     setUsernameOk(false)
+    setDisplayName('')
   }
 
   return (
@@ -233,7 +237,19 @@ function AuthPageInner() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Username — signup only, shown first so it feels like picking an identity */}
+          {/* Display name — signup only */}
+          {tab === 'signup' && (
+            <input
+              type="text"
+              placeholder="Your name"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              autoComplete="name"
+              className="input"
+            />
+          )}
+
+          {/* Username — signup only */}
           {tab === 'signup' && (
             <div>
               <div className="relative">
@@ -273,7 +289,7 @@ function AuthPageInner() {
 
           {error && <p className="text-cellar-red text-sm text-center">{error}</p>}
 
-          <button type="submit" disabled={loading || (tab === 'signup' && (!usernameOk || !!usernameError))} className="btn-primary w-full">
+          <button type="submit" disabled={loading || (tab === 'signup' && (!displayName.trim() || !usernameOk || !!usernameError))} className="btn-primary w-full">
             {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
           </button>
 

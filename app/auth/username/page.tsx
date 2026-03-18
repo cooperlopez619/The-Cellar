@@ -11,6 +11,7 @@ export default function ClaimUsernamePage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
 
+  const [displayName,      setDisplayName]      = useState('')
   const [username,         setUsername]         = useState('')
   const [usernameError,    setUsernameError]    = useState('')
   const [usernameOk,       setUsernameOk]       = useState(false)
@@ -31,6 +32,9 @@ export default function ClaimUsernamePage() {
       .then(({ data }) => {
         if (data?.username) router.replace('/')
       })
+    // Pre-fill display name from OAuth provider if available
+    const oauthName = user.user_metadata?.full_name || user.user_metadata?.name || ''
+    if (oauthName) setDisplayName(oauthName)
   }, [user, authLoading])
 
   function handleUsernameChange(val: string) {
@@ -64,22 +68,20 @@ export default function ClaimUsernamePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!user || !usernameOk || usernameError) return
+    if (!displayName.trim()) { setError('Please enter your name'); return }
     setSaving(true)
     const sb = createClient()
+    const name = displayName.trim()
     const { error: err } = await sb
       .from('profiles')
-      .update({ username })
+      .update({ username, display_name: name })
       .eq('id', user.id)
     if (err) {
       setError(err.message)
       setSaving(false)
       return
     }
-    // Also set display name to username if they don't have one yet
-    const displayName = user.user_metadata?.display_name
-    if (!displayName) {
-      await sb.auth.updateUser({ data: { display_name: username } })
-    }
+    await sb.auth.updateUser({ data: { display_name: name } })
     router.push('/')
   }
 
@@ -97,15 +99,30 @@ export default function ClaimUsernamePage() {
 
       <div className="w-full max-w-sm">
         <h1 className="font-serif text-cellar-cream text-2xl font-semibold text-center mb-2">
-          Claim your username
+          Set up your profile
         </h1>
         <p className="text-cellar-muted text-sm text-center mb-6">
-          This is your unique ID on The Cellar.{' '}
-          <span className="text-cellar-amber">Choose carefully — it cannot be changed.</span>
+          Just a couple things before you dive in.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Display name */}
           <div>
+            <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Your name</label>
+            <input
+              type="text"
+              placeholder="First name or full name"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              autoComplete="name"
+              autoFocus
+              className="input"
+            />
+          </div>
+
+          {/* Username */}
+          <div>
+            <label className="text-cellar-muted text-xs uppercase tracking-wide block mb-1.5">Username</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cellar-muted text-sm select-none">@</span>
               <input
@@ -116,8 +133,7 @@ export default function ClaimUsernamePage() {
                 maxLength={20}
                 autoCapitalize="none"
                 autoCorrect="off"
-                autoFocus
-                className={`input pl-7 text-lg ${usernameError ? 'border-red-500/70' : usernameOk ? 'border-emerald-500/70' : ''}`}
+                className={`input pl-7 ${usernameError ? 'border-red-500/70' : usernameOk ? 'border-emerald-500/70' : ''}`}
               />
               {checkingUsername && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
@@ -130,7 +146,10 @@ export default function ClaimUsernamePage() {
               ? <p className="text-red-400 text-xs mt-1.5">{usernameError}</p>
               : usernameOk
               ? <p className="text-emerald-400 text-xs mt-1.5">@{username} is available!</p>
-              : <p className="text-cellar-muted text-xs mt-1.5">Letters, numbers, and _ · 3–20 chars</p>
+              : <p className="text-cellar-muted text-xs mt-1.5">
+                  Letters, numbers, and _ · 3–20 chars ·{' '}
+                  <span className="text-cellar-amber">permanent</span>
+                </p>
             }
           </div>
 
@@ -138,10 +157,10 @@ export default function ClaimUsernamePage() {
 
           <button
             type="submit"
-            disabled={saving || !usernameOk || !!usernameError || checkingUsername}
+            disabled={saving || !displayName.trim() || !usernameOk || !!usernameError || checkingUsername}
             className="btn-primary w-full"
           >
-            {saving ? 'Saving…' : 'Claim @' + (username || 'username')}
+            {saving ? 'Saving…' : 'Get started'}
           </button>
         </form>
       </div>
