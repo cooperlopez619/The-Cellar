@@ -27,6 +27,7 @@ function WhiskeyDetailPage() {
   const { user, loading: authLoading } = useAuth()
   const [whiskey, setWhiskey]       = useState<Whiskey | null>(null)
   const [pours, setPours]           = useState<Pour[]>([])
+  const [communityStats, setCommunityStats] = useState<{ avgScore: number; avgBFB: number; pourCount: number } | null>(null)
   const [votes, setVotes]           = useState<VoteMap>({})
   const [isFavorite, setIsFavorite] = useState(false)
   const [isWishlist, setIsWishlist] = useState(false)
@@ -43,12 +44,20 @@ function WhiskeyDetailPage() {
       sb.from('whiskeys').select('*').eq('id', id).single(),
       sb.from('pours').select('*').eq('whiskey_id', id).eq('user_id', user.id),
       sb.from('user_lists').select('list_type').eq('user_id', user.id).eq('whiskey_id', id),
-    ]).then(async ([{ data: w }, { data: p }, { data: lists }]) => {
+      sb.from('whiskey_community_stats').select('avg_score, avg_bfb, pour_count').eq('whiskey_id', id).maybeSingle(),
+    ]).then(async ([{ data: w }, { data: p }, { data: lists }, { data: community }]) => {
       setWhiskey(w)
       const pourList = p ?? []
       setPours(pourList)
       setIsFavorite(lists?.some(l => l.list_type === 'favorite') ?? false)
       setIsWishlist(lists?.some(l => l.list_type === 'wishlist') ?? false)
+      if (community) {
+        setCommunityStats({
+          avgScore:  community.avg_score  ?? 0,
+          avgBFB:    community.avg_bfb    ?? 0,
+          pourCount: community.pour_count ?? 0,
+        })
+      }
 
       // Fetch votes for all pours on this whiskey
       const pourIds = pourList.map((x: Pour) => x.id)
@@ -160,7 +169,10 @@ function WhiskeyDetailPage() {
       {/* Header card */}
       <div className="card p-5 mb-4">
         <div className="flex items-start gap-4">
-          <ScoreRing score={avgMaster} size={72} />
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <ScoreRing score={avgMaster} size={72} />
+            {avgMaster > 0 && <p className="text-[9px] text-cellar-muted leading-none">My Score</p>}
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h1 className="font-serif text-cellar-cream text-xl font-bold leading-tight">{whiskey.name}</h1>
@@ -199,31 +211,56 @@ function WhiskeyDetailPage() {
             {avgBFB > 0 && <div className="mt-2"><BFBBadge score={avgBFB} /></div>}
           </div>
         </div>
-        <p className="text-cellar-muted text-xs mt-3">{pours.length} community {pours.length === 1 ? 'pour' : 'pours'}</p>
+        {communityStats && communityStats.pourCount > 0 && (
+          <p className="text-cellar-muted text-xs mt-3">
+            {communityStats.pourCount} community {communityStats.pourCount === 1 ? 'pour' : 'pours'}
+          </p>
+        )}
       </div>
 
       {/* Score breakdown */}
-      {pours.length > 0 && (
+      {(communityStats || pours.length > 0) && (
         <div className="card p-5 mb-4">
           <h2 className="section-title mb-4">Community Breakdown</h2>
 
-          <div className="space-y-1 mb-4">
-            <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Taste</p>
-            <div className="space-y-3">
-              {TASTE_SUBSCORES.map(s => (
-                <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
-              ))}
+          {/* Community overall scores */}
+          {communityStats && (
+            <div className="flex items-center gap-5 mb-5">
+              <div className="flex flex-col items-center gap-1">
+                <ScoreRing score={communityStats.avgScore} size={52} strokeWidth={4} />
+                <p className="text-[9px] text-cellar-muted leading-none">Avg. Score</p>
+              </div>
+              {communityStats.avgBFB > 0 && (
+                <div className="flex flex-col items-center gap-1">
+                  <ScoreRing score={communityStats.avgBFB} size={52} strokeWidth={4} />
+                  <p className="text-[9px] text-cellar-muted leading-none">Avg. BFB</p>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          <div className="border-t border-cellar-border pt-4 space-y-1">
-            <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Appearance</p>
-            <div className="space-y-3">
-              {APPEARANCE_SUBSCORES.map(s => (
-                <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
-              ))}
-            </div>
-          </div>
+          {/* User's personal sub-score breakdown */}
+          {pours.length > 0 && (
+            <>
+              <div className="border-t border-cellar-border pt-4 space-y-1 mb-4">
+                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">My Taste Breakdown</p>
+                <div className="space-y-3">
+                  {TASTE_SUBSCORES.map(s => (
+                    <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-cellar-border pt-4 space-y-1">
+                <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">My Appearance Breakdown</p>
+                <div className="space-y-3">
+                  {APPEARANCE_SUBSCORES.map(s => (
+                    <SubScoreBar key={s.key} label={s.label} score={avgSubScore(s.key)} />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
