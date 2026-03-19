@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../../hooks/useAuth'
 import ScoreRing from '../../components/ui/ScoreRing'
@@ -10,6 +10,7 @@ import BFBBadge from '../../components/ui/BFBBadge'
 import WhiskeyCard from '../../components/whiskey/WhiskeyCard'
 import { ALL_SUBSCORES, WHISKEY_TYPES, calcMasterScore, type Scores } from '../../lib/scoring'
 import HelpButton from '../../components/ui/HelpButton'
+import { BookmarkIcon, ShareIcon, StarIcon } from '../../components/icons/ActionIcons'
 import type { Pour, Whiskey } from '../../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -67,45 +68,24 @@ function PencilIcon() {
   )
 }
 
-function StarIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  )
-}
-
-function BookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-    </svg>
-  )
-}
-
-function ShareIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <path d="M8.59 13.51l6.83 3.98" />
-      <path d="M15.41 6.51l-6.82 3.98" />
-    </svg>
-  )
-}
 
 type Tab = 'pours' | 'favorites' | 'wishlist'
+function parseTab(value: string | null): Tab {
+  if (value === 'favorites' || value === 'wishlist' || value === 'pours') return value
+  return 'pours'
+}
 
 export default function MyCellarPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [pours, setPours] = useState<Pour[]>([])
   const [favorites, setFavorites] = useState<Whiskey[]>([])
   const [wishlist, setWishlist] = useState<Whiskey[]>([])
   const [communityStats, setCommunityStats] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>('pours')
+  const [tab, setTab] = useState<Tab>(parseTab(searchParams.get('tab')))
   const [typeFilter, setType] = useState('')
   const [sortBy, setSortBy] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -113,6 +93,10 @@ export default function MyCellarPage() {
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
   }, [user, authLoading])
+
+  useEffect(() => {
+    setTab(parseTab(searchParams.get('tab')))
+  }, [searchParams])
 
   useEffect(() => {
     if (!user) return
@@ -131,6 +115,13 @@ export default function MyCellarPage() {
       setLoading(false)
     })
   }, [user])
+
+  function handleTabChange(nextTab: Tab) {
+    setTab(nextTab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', nextTab)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   async function toggleList(whiskey: Whiskey, type: 'favorite' | 'wishlist') {
     if (!user) return
@@ -260,7 +251,7 @@ export default function MyCellarPage() {
       {/* Tabs */}
       <div className="flex bg-cellar-surface border border-cellar-border rounded-xl p-1 mb-4" data-tutorial="cellar-tabs">
         {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
+          <button key={t.key} onClick={() => handleTabChange(t.key)}
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === t.key ? 'bg-cellar-amber text-cellar-bg' : 'text-cellar-muted'}`}>
             {t.label}{t.count > 0 ? ` (${t.count})` : ''}
           </button>

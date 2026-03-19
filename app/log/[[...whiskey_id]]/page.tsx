@@ -30,6 +30,17 @@ function WhiskeySearch({ onSelect }: { onSelect: (w: Whiskey) => void }) {
   const ref                   = useRef<HTMLDivElement>(null)
   const timerRef              = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  function getSearchRank(w: Whiskey, search: string) {
+    const name = w.name.toLowerCase()
+    const distillery = w.distillery.toLowerCase()
+    if (name === search) return 0
+    if (name.startsWith(search)) return 1
+    if (name.includes(search)) return 2
+    if (distillery.startsWith(search)) return 3
+    if (distillery.includes(search)) return 4
+    return 5
+  }
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -42,17 +53,26 @@ function WhiskeySearch({ onSelect }: { onSelect: (w: Whiskey) => void }) {
     setQuery(value)
     setOpen(true)
     if (timerRef.current) clearTimeout(timerRef.current)
-    if (!value.trim()) { setResults([]); setLoading(false); return }
+    const normalizedSearch = value.trim().toLowerCase()
+    if (!normalizedSearch) { setResults([]); setLoading(false); return }
     setLoading(true)
     timerRef.current = setTimeout(async () => {
       const sb = createClient()
       const { data } = await sb
         .from('whiskeys')
         .select('*')
-        .or(`name.ilike.%${value}%,distillery.ilike.%${value}%`)
-        .order('name')
-        .limit(30)
-      setResults(data ?? [])
+        .or(`name.ilike.%${normalizedSearch}%,distillery.ilike.%${normalizedSearch}%`)
+        .limit(120)
+
+      const ranked = (data ?? [])
+        .sort((a, b) => {
+          const rankDiff = getSearchRank(a, normalizedSearch) - getSearchRank(b, normalizedSearch)
+          if (rankDiff !== 0) return rankDiff
+          return a.name.localeCompare(b.name)
+        })
+        .slice(0, 30)
+
+      setResults(ranked)
       setLoading(false)
     }, 200)
   }

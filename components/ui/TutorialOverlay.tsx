@@ -14,19 +14,19 @@ const STEPS = [
     selector: null,
   },
   {
-    page: '/',
+    page: '/catalog',
     title: 'Search & Discover',
     description: 'Use the search bar to find any whiskey or distillery by name.',
     selector: '[data-tutorial="catalog-search"]',
   },
   {
-    page: '/',
+    page: '/catalog',
     title: 'Filter by Type & Price',
     description: 'Narrow down the catalog by whiskey type or price range using these dropdowns.',
     selector: '[data-tutorial="catalog-filters"]',
   },
   {
-    page: '/',
+    page: '/catalog',
     title: 'Favorites & Wishlist',
     description: 'Tap the star to save a whiskey to Favorites. Tap the bookmark to add it to your Wishlist.',
     selector: '[data-tutorial="first-whiskey-card"]',

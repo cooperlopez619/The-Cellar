@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Suspense } from 'react'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Cormorant_Garamond, Geist } from 'next/font/google'
 import Providers from './providers'
 import BottomNav from '../components/ui/BottomNav'
@@ -19,6 +19,10 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'The Cellar',
   description: 'Your personal whiskey journal & discovery app',
+}
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

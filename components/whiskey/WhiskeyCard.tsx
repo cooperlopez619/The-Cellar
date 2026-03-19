@@ -3,24 +3,9 @@ import Link from 'next/link'
 import ScoreRing from '../ui/ScoreRing'
 import TagPill from '../ui/TagPill'
 import BFBBadge from '../ui/BFBBadge'
+import { BookmarkIcon, StarIcon } from '../icons/ActionIcons'
 import { PRICE_TIER_RANGE, type PriceTier } from '../../lib/scoring'
 import type { Whiskey } from '../../lib/database.types'
-
-function StarIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-    </svg>
-  )
-}
-
-function BookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-    </svg>
-  )
-}
 
 interface Props {
   whiskey: Whiskey
@@ -70,7 +55,7 @@ export default function WhiskeyCard({
                 className={`transition-colors ${isFavorite ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
                 aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
-                <StarIcon filled={isFavorite} />
+                <StarIcon filled={isFavorite} size={18} />
               </button>
             )}
             {onToggleWishlist && (
@@ -80,7 +65,7 @@ export default function WhiskeyCard({
                 className={`transition-colors ${isWishlist ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
                 aria-label={isWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                <BookmarkIcon filled={isWishlist} />
+                <BookmarkIcon filled={isWishlist} size={16} />
               </button>
             )}
           </div>
