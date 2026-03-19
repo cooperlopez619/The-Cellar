@@ -176,10 +176,6 @@ export default function HomePage() {
     return out
   }, [pours, whiskeyById])
 
-  const favoriteWhiskeys = useMemo(() => {
-    return whiskeys.filter(w => favorites.has(w.id)).slice(0, 10)
-  }, [whiskeys, favorites])
-
   const recommendedWhiskeys = useMemo(() => {
     const recentIds = new Set(recentWhiskeys.map(w => w.id))
     const typeCounts: Record<string, number> = {}
@@ -202,6 +198,32 @@ export default function HomePage() {
       })
       .slice(0, 12)
   }, [whiskeys, stats, pours, whiskeyById, recentWhiskeys, favorites])
+
+  const trendingWhiskeys = useMemo(() => {
+    return whiskeys
+      .filter(w => !w.is_custom)
+      .sort((a, b) => {
+        const bfbDiff = (stats[b.id]?.avgBFB ?? 0) - (stats[a.id]?.avgBFB ?? 0)
+        if (bfbDiff !== 0) return bfbDiff
+        const scoreDiff = (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0)
+        if (scoreDiff !== 0) return scoreDiff
+        return a.name.localeCompare(b.name)
+      })
+      .slice(0, 12)
+  }, [whiskeys, stats])
+
+  const newReleaseWhiskeys = useMemo(() => {
+    return whiskeys
+      .filter(w => !w.is_custom)
+      .sort((a, b) => {
+        const dateDiff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        if (dateDiff !== 0) return dateDiff
+        const scoreDiff = (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0)
+        if (scoreDiff !== 0) return scoreDiff
+        return a.name.localeCompare(b.name)
+      })
+      .slice(0, 12)
+  }, [whiskeys, stats])
 
   if (authLoading || loading) {
     return (
@@ -245,7 +267,7 @@ export default function HomePage() {
       </div>
 
       <RailSection
-        title="Recommended"
+        title="Recommended for You"
         items={recommendedWhiskeys}
         stats={stats}
         emptyText="No recommendations yet. Add a few pours to tune this rail."
@@ -256,12 +278,12 @@ export default function HomePage() {
       />
 
       <RailSection
-        title="Recents"
-        items={recentWhiskeys}
+        title="Trending in the Community"
+        items={trendingWhiskeys}
         stats={stats}
-        emptyText="No recent pours yet. Log your first pour to get started."
-        ctaHref="/cellar"
-        ctaLabel="See all"
+        emptyText="Not enough community activity yet to show trending bottles."
+        ctaHref="/catalog"
+        ctaLabel="Browse all"
         favorites={favorites}
         wishlists={wishlists}
         onToggleFavorite={id => toggleList(id, 'favorite')}
@@ -269,11 +291,24 @@ export default function HomePage() {
       />
 
       <RailSection
-        title="Favorites"
-        items={favoriteWhiskeys}
+        title="New Releases"
+        items={newReleaseWhiskeys}
         stats={stats}
-        emptyText="No favorites yet. Star a bottle and it will appear here."
-        ctaHref="/cellar?tab=favorites"
+        emptyText="No recent releases available yet."
+        ctaHref="/catalog"
+        ctaLabel="Browse all"
+        favorites={favorites}
+        wishlists={wishlists}
+        onToggleFavorite={id => toggleList(id, 'favorite')}
+        onToggleWishlist={id => toggleList(id, 'wishlist')}
+      />
+
+      <RailSection
+        title="Recent Pours"
+        items={recentWhiskeys}
+        stats={stats}
+        emptyText="No recent pours yet. Log your first pour to get started."
+        ctaHref="/cellar"
         ctaLabel="See all"
         favorites={favorites}
         wishlists={wishlists}
