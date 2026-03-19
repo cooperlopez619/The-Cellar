@@ -152,7 +152,7 @@ export default function AddFriendPage() {
     <div className="min-h-screen bg-cellar-bg flex flex-col items-center justify-center gap-4 px-6">
       <CellarLogo size={90} />
       <p className="text-cellar-muted text-center">No user found with username <span className="text-cellar-cream font-medium">@{username}</span>.</p>
-      <Link href="/" className="btn-primary text-center">Go to Catalog</Link>
+      <Link href="/catalog" className="btn-primary text-center">Go to Catalog</Link>
     </div>
   )
 

@@ -1,99 +1,95 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { useAuth } from '../hooks/useAuth'
-import { WHISKEY_TYPES, PRICE_TIERS } from '../lib/scoring'
-import WhiskeyCard from '../components/whiskey/WhiskeyCard'
 import CellarLogo from '../components/ui/CellarLogo'
 import HelpButton from '../components/ui/HelpButton'
-import type { Whiskey } from '../lib/database.types'
+import WhiskeyRailCard from '../components/whiskey/WhiskeyRailCard'
+import { useAuth } from '../hooks/useAuth'
+import type { Pour, Whiskey } from '../lib/database.types'
 import { createClient } from '@/lib/supabase/client'
 
 type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
-// Module-level cache — survives navigation within the session.
-// Whiskeys and stats are cached (they rarely change); lists are always refreshed.
-let _catalogCache: {
-  uid: string
-  whiskeys: Whiskey[]
+function RailSection({
+  title,
+  items,
+  stats,
+  emptyText,
+  ctaHref,
+  ctaLabel,
+  favorites,
+  wishlists,
+  onToggleFavorite,
+  onToggleWishlist,
+}: {
+  title: string
+  items: Whiskey[]
   stats: Stats
-} | null = null
-
-function FilterDropdown({ value, onChange, options, placeholder }: {
-  value: string
-  onChange: (v: string) => void
-  options: readonly string[]
-  placeholder: string
+  emptyText: string
+  ctaHref?: string
+  ctaLabel?: string
+  favorites: Set<string>
+  wishlists: Set<string>
+  onToggleFavorite: (whiskeyId: string) => void
+  onToggleWishlist: (whiskeyId: string) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const label = value || placeholder
-
   return (
-    <div ref={ref} className="relative flex-1">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 rounded-full px-4 py-2 text-sm font-medium border transition-all ${
-          value ? 'bg-cellar-amber border-cellar-amber text-cellar-bg' : 'bg-cellar-surface border-cellar-border text-cellar-muted'
-        }`}
-      >
-        <span>{label}</span>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-          className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
-          <path d="M2 4l4 4 4-4"/>
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-cellar-surface border border-cellar-border rounded-xl overflow-hidden shadow-lg">
-          <button
-            onClick={() => { onChange(''); setOpen(false) }}
-            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-              !value ? 'text-cellar-amber font-medium' : 'text-cellar-muted hover:text-cellar-text hover:bg-cellar-bg'
-            }`}
-          >
-            {placeholder}
-          </button>
-          {options.map(opt => (
-            <button
-              key={opt}
-              onClick={() => { onChange(opt); setOpen(false) }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t border-cellar-border/50 ${
-                value === opt ? 'text-cellar-amber font-medium' : 'text-cellar-muted hover:text-cellar-text hover:bg-cellar-bg'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
+    <section className="mb-7">
+      <div className="flex items-center justify-between px-1 mb-2.5">
+        <h2 className="font-serif text-cellar-cream text-lg font-semibold">{title}</h2>
+        <div className="flex items-center gap-3">
+          {ctaHref && ctaLabel && (
+            <Link href={ctaHref} className="text-cellar-amber text-xs font-semibold">
+              {ctaLabel}
+            </Link>
+          )}
+          <p className="text-cellar-muted text-xs">{items.length}</p>
+        </div>
+      </div>
+      {items.length === 0 ? (
+        <div className="card p-4">
+          <p className="text-cellar-muted text-sm">{emptyText}</p>
+        </div>
+      ) : (
+        <div
+          className="-mx-4 pl-4 pr-1 overflow-x-auto"
+          onWheel={e => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              e.currentTarget.scrollLeft += e.deltaY
+              e.preventDefault()
+            }
+          }}
+        >
+          <div className="flex gap-3 w-max pb-1">
+            {items.map(w => (
+              <WhiskeyRailCard
+                key={w.id}
+                whiskey={w}
+                score={stats[w.id]?.avgScore ?? 0}
+                scoreLabel="Avg."
+                isFavorite={favorites.has(w.id)}
+                isWishlist={wishlists.has(w.id)}
+                onToggleFavorite={() => onToggleFavorite(w.id)}
+                onToggleWishlist={() => onToggleWishlist(w.id)}
+              />
+            ))}
+          </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
-export default function CatalogPage() {
+export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [whiskeys, setWhiskeys]     = useState<Whiskey[]>([])
-  const [stats, setStats]           = useState<Stats>({})
-  const [search, setSearch]         = useState('')
-  const [typeFilter, setType]       = useState('')
-  const [tierFilter, setTier]       = useState('')
-  const [sortBy, setSortBy]         = useState('')
-  const [loading, setLoading]       = useState(true)
-  const [favorites, setFavorites]   = useState<Set<string>>(new Set())
-  const [wishlists, setWishlists]   = useState<Set<string>>(new Set())
+  const [whiskeys, setWhiskeys] = useState<Whiskey[]>([])
+  const [stats, setStats] = useState<Stats>({})
+  const [pours, setPours] = useState<Pick<Pour, 'whiskey_id' | 'created_at'>[]>([])
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [wishlists, setWishlists] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -101,34 +97,18 @@ export default function CatalogPage() {
 
   useEffect(() => {
     if (!user) return
+    const userId = user.id
     const supabase = createClient()
 
-    async function fetchLists() {
-      const { data: lists } = await supabase
-        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
-      if (lists) {
-        setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
-        setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
-      }
-    }
-
-    // If we have a cache for this user, show it immediately and only refresh lists
-    if (_catalogCache?.uid === user.id) {
-      setWhiskeys(_catalogCache.whiskeys)
-      setStats(_catalogCache.stats)
-      setLoading(false)
-      fetchLists() // silently refresh favorites/wishlists in background
-      return
-    }
-
     async function load() {
-      // Fire community stats + user lists immediately in parallel with whiskey fetch
       const statsPromise = supabase
         .from('whiskey_community_stats').select('whiskey_id, avg_score, avg_bfb')
       const listsPromise = supabase
-        .from('user_lists').select('whiskey_id, list_type').eq('user_id', user!.id)
+        .from('user_lists').select('whiskey_id, list_type').eq('user_id', userId)
+      const poursPromise = supabase
+        .from('pours').select('whiskey_id, created_at').eq('user_id', userId)
+        .order('created_at', { ascending: false }).limit(200)
 
-      // Fetch all whiskeys (paginated if needed)
       let all: Whiskey[] = []
       let from = 0
       const PAGE = 1000
@@ -141,26 +121,23 @@ export default function CatalogPage() {
         from += PAGE
       }
 
-      // Resolve user data (was running in parallel with whiskey pagination)
-      const [{ data: pours }, { data: lists }] = await Promise.all([statsPromise, listsPromise])
-
-      if (lists) {
-        setFavorites(new Set(lists.filter(l => l.list_type === 'favorite').map(l => l.whiskey_id)))
-        setWishlists(new Set(lists.filter(l => l.list_type === 'wishlist').map(l => l.whiskey_id)))
-      }
+      const [{ data: statsRows }, { data: listRows }, { data: pourRows }] = await Promise.all([
+        statsPromise, listsPromise, poursPromise,
+      ])
 
       const out: Stats = {}
-      for (const row of pours ?? []) {
+      for (const row of statsRows ?? []) {
         out[row.whiskey_id] = { avgScore: row.avg_score ?? 0, avgBFB: row.avg_bfb ?? 0 }
       }
 
-      // Cache whiskeys + stats for instant return visits
-      _catalogCache = { uid: user!.id, whiskeys: all, stats: out }
-
       setWhiskeys(all)
       setStats(out)
+      setPours((pourRows ?? []) as Pick<Pour, 'whiskey_id' | 'created_at'>[])
+      setFavorites(new Set((listRows ?? []).filter(r => r.list_type === 'favorite').map(r => r.whiskey_id)))
+      setWishlists(new Set((listRows ?? []).filter(r => r.list_type === 'wishlist').map(r => r.whiskey_id)))
       setLoading(false)
     }
+
     load()
   }, [user])
 
@@ -179,57 +156,76 @@ export default function CatalogPage() {
     }
   }
 
-  const filtered = useMemo(() => {
-    const TIER_RANK: Record<string, number> = { '$': 0, '$$': 1, '$$$': 2, '$$$$': 3, '$$$$$': 4 }
-    return whiskeys
-      .filter(w =>
-        (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.distillery.toLowerCase().includes(search.toLowerCase())) &&
-        (!typeFilter || w.type === typeFilter) &&
-        (!tierFilter || w.price_tier === tierFilter)
-      )
-      .sort((a, b) => {
-        if (sortBy === 'Name A → Z') return a.name.localeCompare(b.name)
-        if (sortBy === 'Price ↑') {
-          const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? 99) : 99
-          const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? 99) : 99
-          return ai - bi || a.name.localeCompare(b.name)
-        }
-        if (sortBy === 'Price ↓') {
-          const ai = a.price_tier != null ? (TIER_RANK[a.price_tier] ?? -1) : -1
-          const bi = b.price_tier != null ? (TIER_RANK[b.price_tier] ?? -1) : -1
-          return bi - ai || a.name.localeCompare(b.name)
-        }
-        // default (Score ↓): highest rated first
-        return (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0) || a.name.localeCompare(b.name)
-      })
-  }, [whiskeys, search, typeFilter, tierFilter, sortBy, stats])
+  const whiskeyById = useMemo(() => {
+    const map: Record<string, Whiskey> = {}
+    for (const w of whiskeys) map[w.id] = w
+    return map
+  }, [whiskeys])
 
-  const listRef = useRef<HTMLDivElement>(null)
-  // The scroll container is <main> in the root layout (overflow-y-auto),
-  // not the window — so we use useVirtualizer with getScrollElement.
-  const scrollContainerRef = useRef<HTMLElement | null>(null)
-  useEffect(() => {
-    scrollContainerRef.current = document.querySelector('main')
-  }, [])
-
-  const [scrollMargin, setScrollMargin] = useState(0)
-  // Measure the list's offset from the top of <main> after it mounts.
-  useEffect(() => {
-    if (!loading && listRef.current && scrollContainerRef.current) {
-      const listRect = listRef.current.getBoundingClientRect()
-      const containerRect = scrollContainerRef.current.getBoundingClientRect()
-      setScrollMargin(listRect.top - containerRect.top + scrollContainerRef.current.scrollTop)
+  const recentWhiskeys = useMemo(() => {
+    const seen = new Set<string>()
+    const out: Whiskey[] = []
+    for (const p of pours) {
+      if (seen.has(p.whiskey_id)) continue
+      const whiskey = whiskeyById[p.whiskey_id]
+      if (!whiskey) continue
+      seen.add(p.whiskey_id)
+      out.push(whiskey)
+      if (out.length >= 10) break
     }
-  }, [loading])
+    return out
+  }, [pours, whiskeyById])
 
-  const virtualizer = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 142,
-    overscan: 8,
-    scrollMargin,
-    measureElement: el => el.getBoundingClientRect().height,
-  })
+  const favoriteWhiskeys = useMemo(() => {
+    return whiskeys.filter(w => favorites.has(w.id)).slice(0, 10)
+  }, [whiskeys, favorites])
+
+  const recommendedWhiskeys = useMemo(() => {
+    const recentIds = new Set(recentWhiskeys.map(w => w.id))
+    const typeCounts: Record<string, number> = {}
+    for (const p of pours) {
+      const t = whiskeyById[p.whiskey_id]?.type
+      if (t) typeCounts[t] = (typeCounts[t] ?? 0) + 1
+    }
+    const favoredType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
+
+    return whiskeys
+      .filter(w => !recentIds.has(w.id) && !favorites.has(w.id))
+      .sort((a, b) => {
+        const typeDiff = Number((b.type === favoredType)) - Number((a.type === favoredType))
+        if (typeDiff !== 0) return typeDiff
+        const scoreDiff = (stats[b.id]?.avgScore ?? 0) - (stats[a.id]?.avgScore ?? 0)
+        if (scoreDiff !== 0) return scoreDiff
+        const bfbDiff = (stats[b.id]?.avgBFB ?? 0) - (stats[a.id]?.avgBFB ?? 0)
+        if (bfbDiff !== 0) return bfbDiff
+        return a.name.localeCompare(b.name)
+      })
+      .slice(0, 12)
+  }, [whiskeys, stats, pours, whiskeyById, recentWhiskeys, favorites])
+
+  if (authLoading || loading) {
+    return (
+      <div className="page animate-pulse">
+        <div className="flex items-center justify-between mb-6">
+          <div className="w-8" />
+          <div className="h-6 w-28 rounded-lg bg-cellar-surface" />
+          <div className="h-8 w-8 rounded-full bg-cellar-surface" />
+        </div>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="mb-6">
+            <div className="h-5 w-28 rounded bg-cellar-surface mb-3" />
+            <div className="-mx-4 pl-4 overflow-x-auto">
+              <div className="flex gap-3 w-max">
+                {[...Array(3)].map((__, idx) => (
+                  <div key={idx} className="card min-w-[240px] h-[132px]" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="page">
@@ -239,74 +235,51 @@ export default function CatalogPage() {
         <HelpButton />
       </div>
 
-      <div className="relative mb-3">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-cellar-muted" width="16" height="16"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input type="search" placeholder="Search whiskeys & distilleries…"
-          value={search} onChange={e => setSearch(e.target.value)} className="input pl-9"
-          data-tutorial="catalog-search" />
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="font-serif text-cellar-cream text-2xl font-bold">Home</h1>
+        <Link href="/log"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-cellar-amber text-cellar-bg">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Log Pour
+        </Link>
       </div>
 
-      <div className="flex gap-2 mb-4" data-tutorial="catalog-filters">
-        <FilterDropdown value={typeFilter} onChange={setType} options={WHISKEY_TYPES} placeholder="All Types" />
-        <FilterDropdown value={tierFilter} onChange={setTier} options={PRICE_TIERS} placeholder="All Prices" />
-        <FilterDropdown value={sortBy} onChange={setSortBy} options={['Name A → Z', 'Price ↑', 'Price ↓']} placeholder="Score ↓" />
-      </div>
+      <RailSection
+        title="Recommended"
+        items={recommendedWhiskeys}
+        stats={stats}
+        emptyText="No recommendations yet. Add a few pours to tune this rail."
+        favorites={favorites}
+        wishlists={wishlists}
+        onToggleFavorite={id => toggleList(id, 'favorite')}
+        onToggleWishlist={id => toggleList(id, 'wishlist')}
+      />
 
-      {loading ? (
-        <div className="space-y-3 animate-pulse">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="card p-4 flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-cellar-surface shrink-0" />
-              <div className="flex-1 space-y-2.5">
-                <div className="h-4 bg-cellar-surface rounded-lg" style={{ width: `${55 + (i % 4) * 12}%` }} />
-                <div className="h-3 bg-cellar-surface rounded-lg w-1/3" />
-                <div className="h-5 bg-cellar-surface rounded-full w-16" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-cellar-muted text-sm">No whiskeys found</p>
-          <Link href="/log" className="btn-primary inline-block mt-4">Add a Bottle</Link>
-        </div>
-      ) : (
-        <div ref={listRef}>
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-            {virtualizer.getVirtualItems().map(virtualRow => {
-              const w = filtered[virtualRow.index]
-              return (
-                <div
-                  key={w.id}
-                  ref={virtualizer.measureElement}
-                  data-index={virtualRow.index}
-                  data-tutorial={virtualRow.index === 0 ? 'first-whiskey-card' : undefined}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-                    paddingBottom: '12px',
-                  }}
-                >
-                  <WhiskeyCard whiskey={w}
-                    communityScore={stats[w.id]?.avgScore ?? 0}
-                    communityBFB={stats[w.id]?.avgBFB ?? 0}
-                    scoreLabel="Avg. Score"
-                    isFavorite={favorites.has(w.id)}
-                    isWishlist={wishlists.has(w.id)}
-                    onToggleFavorite={() => toggleList(w.id, 'favorite')}
-                    onToggleWishlist={() => toggleList(w.id, 'wishlist')} />
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      <RailSection
+        title="Recents"
+        items={recentWhiskeys}
+        stats={stats}
+        emptyText="No recent pours yet. Log your first pour to get started."
+        ctaHref="/cellar"
+        ctaLabel="See all"
+        favorites={favorites}
+        wishlists={wishlists}
+        onToggleFavorite={id => toggleList(id, 'favorite')}
+        onToggleWishlist={id => toggleList(id, 'wishlist')}
+      />
+
+      <RailSection
+        title="Favorites"
+        items={favoriteWhiskeys}
+        stats={stats}
+        emptyText="No favorites yet. Star a bottle and it will appear here."
+        ctaHref="/cellar?tab=favorites"
+        ctaLabel="See all"
+        favorites={favorites}
+        wishlists={wishlists}
+        onToggleFavorite={id => toggleList(id, 'favorite')}
+        onToggleWishlist={id => toggleList(id, 'wishlist')}
+      />
     </div>
   )
 }

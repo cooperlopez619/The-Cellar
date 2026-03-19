@@ -1,6 +1,9 @@
 {
   "name": "The Cellar",
   "short_name": "The Cellar",
+  "description": "Your personal whiskey journal & discovery app",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -15,5 +18,6 @@
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "orientation": "portrait"
 }
