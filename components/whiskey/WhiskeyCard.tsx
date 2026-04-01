@@ -27,10 +27,18 @@ export default function WhiskeyCard({
   return (
     <Link href={`/whiskey/${whiskey.id}`} className="card block p-4 active:scale-[0.98] transition-transform">
       <div className="flex items-start gap-3">
-        {/* Left: score ring always */}
-        <div className="shrink-0 pt-1 flex flex-col items-center gap-0.5">
-          <ScoreRing score={communityScore} size={56} strokeWidth={4} />
-          {scoreLabel && <p className="text-[9px] text-cellar-muted leading-none">{scoreLabel}</p>}
+        {/* Left: score ring + bottle image side by side */}
+        <div className="shrink-0 flex items-center gap-2 pt-1">
+          <div className="flex flex-col items-center gap-0.5">
+            <ScoreRing score={communityScore} size={48} strokeWidth={3} />
+            {scoreLabel && <p className="text-[9px] text-cellar-muted leading-none">{scoreLabel}</p>}
+          </div>
+          {whiskey.image_url && (
+            <div className="w-8 h-14 flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={whiskey.image_url} alt={whiskey.name} loading="lazy" className="max-w-full max-h-full object-contain" />
+            </div>
+          )}
         </div>
 
         {/* Middle: name, distillery, tags */}
@@ -50,39 +58,31 @@ export default function WhiskeyCard({
           </div>
         </div>
 
-        {/* Right: bottle image + action buttons */}
-        <div className="shrink-0 flex flex-col items-center gap-2">
-          {whiskey.image_url && (
-            <div className="w-10 h-14 flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={whiskey.image_url} alt={whiskey.name} loading="lazy" className="max-w-full max-h-full object-contain" />
-            </div>
-          )}
-          {(onToggleFavorite || onToggleWishlist) && (
-            <div className="flex flex-col gap-2 items-center">
-              {onToggleFavorite && (
-                <button
-                  type="button"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite() }}
-                  className={`transition-colors ${isFavorite ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
-                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                >
-                  <StarIcon filled={isFavorite} size={18} />
-                </button>
-              )}
-              {onToggleWishlist && (
-                <button
-                  type="button"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleWishlist() }}
-                  className={`transition-colors ${isWishlist ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
-                  aria-label={isWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-                >
-                  <BookmarkIcon filled={isWishlist} size={16} />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Right: action buttons */}
+        {(onToggleFavorite || onToggleWishlist) && (
+          <div className="shrink-0 flex flex-col gap-2 items-center pt-0.5">
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite() }}
+                className={`transition-colors ${isFavorite ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <StarIcon filled={isFavorite} size={18} />
+              </button>
+            )}
+            {onToggleWishlist && (
+              <button
+                type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleWishlist() }}
+                className={`transition-colors ${isWishlist ? 'text-cellar-amber' : 'text-cellar-muted hover:text-cellar-cream'}`}
+                aria-label={isWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <BookmarkIcon filled={isWishlist} size={16} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   )

@@ -14,8 +14,11 @@ type Stats = Record<string, { avgScore: number; avgBFB: number }>
 
 // Module-level cache — survives navigation within the session.
 // Whiskeys and stats are cached (they rarely change); lists are always refreshed.
+// Bump CACHE_VERSION to force a fresh fetch after catalog/image updates.
+const CACHE_VERSION = 2
 let _catalogCache: {
   uid: string
+  version: number
   whiskeys: Whiskey[]
   stats: Stats
 } | null = null
@@ -112,7 +115,7 @@ export default function CatalogPage() {
     }
 
     // If we have a cache for this user, show it immediately and only refresh lists
-    if (_catalogCache?.uid === user.id) {
+    if (_catalogCache?.uid === user.id && _catalogCache?.version === CACHE_VERSION) {
       setWhiskeys(_catalogCache.whiskeys)
       setStats(_catalogCache.stats)
       setLoading(false)
@@ -154,7 +157,7 @@ export default function CatalogPage() {
       }
 
       // Cache whiskeys + stats for instant return visits
-      _catalogCache = { uid: user!.id, whiskeys: all, stats: out }
+      _catalogCache = { uid: user!.id, version: CACHE_VERSION, whiskeys: all, stats: out }
 
       setWhiskeys(all)
       setStats(out)

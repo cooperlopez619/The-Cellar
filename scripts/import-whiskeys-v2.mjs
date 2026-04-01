@@ -22,7 +22,7 @@ const SQLITE_PATH = '/tmp/cellar-data/data/whiskey.sqlite'
 const IMAGES_DIR  = '/tmp/cellar-data/data/images'
 const BATCH_SIZE  = 100
 const IMG_CONCURRENCY = 10  // parallel image uploads at a time
-const SKIP_IMAGE_UPLOAD = false  // images already uploaded — set false to re-upload
+const SKIP_IMAGE_UPLOAD = true  // images already uploaded — set false to re-upload
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -138,18 +138,16 @@ const rows = db.prepare(`
 console.log(`📦 ${rows.length} complete records loaded from SQLite`)
 
 // Upload images (skip if already done)
-let imgUrlMap = /** @type {Record<string, string | null>} */ ({})
-if (SKIP_IMAGE_UPLOAD) {
-  console.log('\n📸 Skipping image upload (already done) — reconstructing URLs…')
-  const { data: storageFiles } = await sb.storage.from('images').list('whiskeys', { limit: 5000 })
-  for (const f of storageFiles ?? []) {
-    const id = f.name.replace('.webp', '')
-    const { data } = sb.storage.from('images').getPublicUrl(`whiskeys/${f.name}`)
-    imgUrlMap[id] = data.publicUrl
-  }
-  console.log(`  ✓ ${Object.keys(imgUrlMap).length} image URLs loaded`)
+if (!SKIP_IMAGE_UPLOAD) {
+  await uploadImages(rows.map(r => ({ thumbnailId: r.thumbnail_id })))
 } else {
-  imgUrlMap = await uploadImages(rows.map(r => ({ thumbnailId: r.thumbnail_id })))
+  console.log('\n📸 Skipping image upload (already done)')
+}
+
+// Build image URL directly from known storage pattern — avoids any map lookup issues
+function imageUrl(thumbnailId) {
+  if (!thumbnailId) return null
+  return `${SUPABASE_URL}/storage/v1/object/public/images/whiskeys/${thumbnailId}.webp`
 }
 
 // Build whiskey insert rows
@@ -167,7 +165,7 @@ const whiskeys = rows.map(r => {
     region:       r.region   ?? null,
     abv:          isNaN(abv) ? null : abv,
     price_tier:   mapPriceTier(r.lowest_price),
-    image_url:    imgUrlMap[r.thumbnail_id] ?? null,
+    image_url:    imageUrl(r.thumbnail_id),
     main_taste:   r.main_taste  ?? null,
     sub_taste:    r.sub_taste   ?? null,
     mild_full:    r.mild_full   ? parseFloat(r.mild_full)   : null,
