@@ -114,7 +114,9 @@ export default function HomePage() {
       const PAGE = 1000
       while (true) {
         const { data, error } = await supabase
-          .from('whiskeys').select('*').order('name').range(from, from + PAGE - 1)
+          .from('whiskeys')
+          .select('id, name, distillery, type, region, abv, price_tier, image_url, is_custom, created_by, created_at')
+          .order('name').range(from, from + PAGE - 1)
         if (error || !data?.length) break
         all = [...all, ...data]
         if (data.length < PAGE) break

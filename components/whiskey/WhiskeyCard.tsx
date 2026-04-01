@@ -32,7 +32,7 @@ export default function WhiskeyCard({
           {whiskey.image_url ? (
             <div className="w-14 h-14 rounded-lg bg-cellar-surface flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={whiskey.image_url} alt={whiskey.name} className="w-full h-full object-contain" />
+              <img src={whiskey.image_url} alt={whiskey.name} loading="lazy" className="w-full h-full object-contain" />
             </div>
           ) : (
             <>

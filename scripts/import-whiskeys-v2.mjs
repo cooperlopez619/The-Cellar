@@ -22,6 +22,7 @@ const SQLITE_PATH = '/tmp/cellar-data/data/whiskey.sqlite'
 const IMAGES_DIR  = '/tmp/cellar-data/data/images'
 const BATCH_SIZE  = 100
 const IMG_CONCURRENCY = 10  // parallel image uploads at a time
+const SKIP_IMAGE_UPLOAD = false  // images already uploaded — set false to re-upload
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -110,8 +111,8 @@ const db = new Database(SQLITE_PATH, { readonly: true })
 const rows = db.prepare(`
   SELECT
     doc_id,
-    json_extract(detail_json, '$.whisky_id')       AS thumbnail_id,
-    json_extract(detail_json, '$.full_name')        AS full_name,
+    thumbnail                                       AS thumbnail_id,
+    json_extract(search_json, '$.query')            AS full_name,
     json_extract(detail_json, '$.distillery_name')  AS distillery,
     json_extract(detail_json, '$.country')          AS country,
     json_extract(detail_json, '$.type')             AS type_key,
@@ -126,7 +127,8 @@ const rows = db.prepare(`
     json_extract(search_json, '$.region')           AS region
   FROM search_hits
   WHERE detail_json IS NOT NULL
-    AND json_extract(detail_json, '$.full_name')       != ''
+    AND json_extract(search_json, '$.query')           != ''
+    AND json_extract(search_json, '$.query')           IS NOT NULL
     AND json_extract(detail_json, '$.distillery_name') IS NOT NULL
     AND json_extract(detail_json, '$.country')         IS NOT NULL
     AND json_extract(detail_json, '$.alcohol')         IS NOT NULL
@@ -135,8 +137,20 @@ const rows = db.prepare(`
 
 console.log(`📦 ${rows.length} complete records loaded from SQLite`)
 
-// Upload all images first
-const imgUrlMap = await uploadImages(rows.map(r => ({ thumbnailId: r.thumbnail_id })))
+// Upload images (skip if already done)
+let imgUrlMap = /** @type {Record<string, string | null>} */ ({})
+if (SKIP_IMAGE_UPLOAD) {
+  console.log('\n📸 Skipping image upload (already done) — reconstructing URLs…')
+  const { data: storageFiles } = await sb.storage.from('images').list('whiskeys', { limit: 5000 })
+  for (const f of storageFiles ?? []) {
+    const id = f.name.replace('.webp', '')
+    const { data } = sb.storage.from('images').getPublicUrl(`whiskeys/${f.name}`)
+    imgUrlMap[id] = data.publicUrl
+  }
+  console.log(`  ✓ ${Object.keys(imgUrlMap).length} image URLs loaded`)
+} else {
+  imgUrlMap = await uploadImages(rows.map(r => ({ thumbnailId: r.thumbnail_id })))
+}
 
 // Build whiskey insert rows
 const whiskeys = rows.map(r => {
