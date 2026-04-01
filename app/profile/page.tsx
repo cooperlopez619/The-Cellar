@@ -115,7 +115,8 @@ export default function SocialPage() {
   const [searching,   setSearching]   = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [loadingData, setLoadingData] = useState(true)
+  const [loadingData,  setLoadingData]  = useState(true)
+  const [friendsOpen,  setFriendsOpen]  = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth')
@@ -337,10 +338,6 @@ export default function SocialPage() {
 
       {/* ── Drinking Buddies ────────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-cellar-muted text-xs uppercase tracking-wide">Drinking Buddies</p>
-          <span className="text-cellar-muted text-xs">{friends.length} {friends.length === 1 ? 'buddy' : 'buddies'}</span>
-        </div>
 
         {/* Invite row */}
         {myUsername ? (
@@ -447,31 +444,56 @@ export default function SocialPage() {
           </div>
         )}
 
-        {/* Friends list */}
+        {/* Friends collapsible */}
         {loadingData ? (
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-cellar-amber border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : friends.length === 0 ? (
-          <div className="card p-5 text-center">
-            <p className="text-cellar-muted text-sm">No buddies yet — search above to add friends.</p>
-          </div>
         ) : (
           <div className="card overflow-hidden">
-            {friends.map((u, i) => (
-              <Link
-                key={u.id}
-                href={`/profile/${u.username ?? u.id}`}
-                className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
+            {/* Toggle header */}
+            <button
+              onClick={() => setFriendsOpen(o => !o)}
+              className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
+            >
+              <span className="text-cellar-cream text-sm font-medium">
+                Friends
+                <span className="text-cellar-muted font-normal ml-1.5">({friends.length})</span>
+              </span>
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2"
+                className={`text-cellar-muted transition-transform duration-200 ${friendsOpen ? 'rotate-180' : ''}`}
               >
-                <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id]} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
-                  {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+
+            {/* Expanded list */}
+            {friendsOpen && (
+              friends.length === 0 ? (
+                <div className="px-4 pb-4 pt-1 border-t border-cellar-border/40">
+                  <p className="text-cellar-muted text-sm text-center py-2">No buddies yet — search above to add friends.</p>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
-              </Link>
-            ))}
+              ) : (
+                <div className="border-t border-cellar-border/40">
+                  {friends.map((u, i) => (
+                    <Link
+                      key={u.id}
+                      href={`/profile/${u.username ?? u.id}`}
+                      className={`flex items-center gap-3 px-4 py-3 active:opacity-70 transition-opacity ${i < friends.length - 1 ? 'border-b border-cellar-border/40' : ''}`}
+                    >
+                      <Avatar name={u.display_name ?? u.username} palette={avatarColour(u.id)} avatarUrl={avatarMap[u.id]} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-cellar-cream text-sm font-medium truncate">{u.display_name ?? u.username ?? 'Unknown'}</p>
+                        {u.username && <p className="text-cellar-muted text-xs">@{u.username}</p>}
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cellar-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+                    </Link>
+                  ))}
+                </div>
+              )
+            )}
           </div>
         )}
       </div>
@@ -479,9 +501,14 @@ export default function SocialPage() {
       {/* ── Leaderboard ─────────────────────────────────────────────────── */}
       {leaderboard.length > 1 && (
         <div>
-          <p className="text-cellar-muted text-xs uppercase tracking-wide mb-2">Friends Leaderboard</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-cellar-muted text-xs uppercase tracking-wide">Friends Leaderboard</p>
+            {leaderboard.length > 10 && (
+              <p className="text-cellar-muted text-xs">Top 10 of {leaderboard.length}</p>
+            )}
+          </div>
           <div className="card overflow-hidden">
-            {leaderboard.map((u, i) => (
+            {leaderboard.slice(0, 10).map((u, i) => (
               <div key={u.id}
                 className={`flex items-center gap-3 px-4 py-3 border-b border-cellar-border/40 last:border-0 ${u.isMe ? 'bg-cellar-amber/5' : ''}`}>
                 <div className="w-7 flex items-center justify-center shrink-0">

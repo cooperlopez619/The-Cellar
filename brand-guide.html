@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cellar — Brand Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0C1519;
+      --surface: #162127;
+      --card:    #3A3534;
+      --border:  #2A3A42;
+      --amber:   #CF9D7B;
+      --muted:   #7A8E94;
+      --green:   #52D48A;
+      --red:     #F07060;
+    }
+
+    body {
+      background: #F5F0EA;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #1a1410;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      max-width: 960px;
+      margin: 48px auto;
+      padding: 0 32px 64px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      padding-bottom: 32px;
+      margin-bottom: 56px;
+    }
+    .wordmark {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 56px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--bg);
+      line-height: 1;
+    }
+    .wordmark span {
+      color: var(--amber);
+    }
+    .doc-meta {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 56px; }
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    /* ── Brand statement ── */
+    .brand-statement {
+      background: var(--bg);
+      border-radius: 16px;
+      padding: 40px 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .brand-statement-left h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--amber);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+    .brand-statement-left p {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+    .brand-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .brand-tag {
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+    }
+
+    /* ── Colors ── */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .color-card {
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .color-swatch {
+      height: 80px;
+      width: 100%;
+    }
+    .color-info {
+      padding: 12px 14px;
+    }
+    .color-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1410;
+      margin-bottom: 2px;
+    }
+    .color-hex {
+      font-size: 11px;
+      color: #888;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      margin-bottom: 3px;
+    }
+    .color-token {
+      font-size: 10px;
+      color: #aaa;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .color-role {
+      font-size: 10px;
+      color: #999;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* ── Typography ── */
+    .type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .type-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .type-specimen-display {
+      font-size: 40px;
+      line-height: 1.1;
+      color: var(--bg);
+      margin-bottom: 16px;
+    }
+    .type-specimen-serif {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--bg);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .type-specimen-sans {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: #444;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .type-meta { border-top: 1px solid #f0ebe4; padding-top: 14px; }
+    .type-name { font-size: 12px; font-weight: 600; color: #1a1410; margin-bottom: 3px; }
+    .type-detail { font-size: 11px; color: #999; line-height: 1.6; }
+    .type-scale { margin-top: 8px; }
+    .type-scale-item { font-size: 11px; color: #777; padding: 2px 0; display: flex; justify-content: space-between; }
+
+    /* ── Usage samples ── */
+    .usage-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .usage-card {
+      background: var(--bg);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .usage-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: var(--amber);
+      opacity: 0.04;
+    }
+    .usage-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    /* Mock whiskey card */
+    .mock-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+    .mock-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .mock-pill {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 100px;
+      background: rgba(207,157,123,0.15);
+      color: var(--amber);
+    }
+    .mock-score {
+      font-size: 18px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      color: var(--amber);
+    }
+    .mock-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--amber);
+      margin-bottom: 2px;
+    }
+    .mock-distillery {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    /* Mock button */
+    .mock-btn {
+      background: var(--amber);
+      color: var(--bg);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+      margin-top: 12px;
+    }
+    /* Mock input */
+    .mock-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .mock-input.focused {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    .mock-heading {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+    .mock-subtext {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Tone ── */
+    .tone-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .tone-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .tone-emoji { font-size: 24px; margin-bottom: 10px; }
+    .tone-name { font-size: 13px; font-weight: 600; color: #1a1410; margin-bottom: 6px; }
+    .tone-do { font-size: 11px; color: #3a9e6e; margin-bottom: 3px; }
+    .tone-dont { font-size: 11px; color: #c05040; }
+
+    /* ── Two-col layout ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Spacing & Radius ── */
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .token-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .radius-demo {
+      background: var(--amber);
+      opacity: 0.7;
+      height: 40px;
+      margin-bottom: 10px;
+    }
+    .token-label { font-size: 11px; font-weight: 600; color: #1a1410; margin-bottom: 2px; }
+    .token-value { font-size: 10px; color: #999; font-family: monospace; }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left { font-size: 12px; color: #999; }
+    .footer-right { font-size: 11px; color: #bbb; }
+
+    @media print {
+      body { background: white; }
+      .page { margin: 0; padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="wordmark">The <span>Cellar</span></div>
+      <div class="doc-meta">
+        Brand Guide v1.0<br/>
+        March 2026<br/>
+        Confidential
+      </div>
+    </div>
+
+    <!-- Brand Statement -->
+    <div class="section">
+      <div class="section-label">Brand Foundation</div>
+      <div class="brand-statement">
+        <div class="brand-statement-left">
+          <h2>A journal for the serious sipper.</h2>
+          <p>The Cellar is where whiskey enthusiasts track what they've tasted, discover what's next, and share the passion with people who get it. The brand feels like a well-worn leather tasting journal — warm, considered, and a little luxurious.</p>
+        </div>
+        <div class="brand-tags">
+          <span class="brand-tag">Sophisticated</span>
+          <span class="brand-tag">Warm</span>
+          <span class="brand-tag">Honest</span>
+          <span class="brand-tag">Enthusiast-first</span>
+          <span class="brand-tag">Dark &amp; Moody</span>
+          <span class="brand-tag">Premium</span>
+          <span class="brand-tag">Approachable</span>
+          <span class="brand-tag">Community</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colors -->
+    <div class="section">
+      <div class="section-label">Color Palette</div>
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-swatch" style="background:#0C1519;"></div>
+          <div class="color-info">
+            <div class="color-name">Chinese Black</div>
+            <div class="color-hex">#0C1519</div>
+            <div class="color-token">cellar-bg</div>
+            <div class="color-role">App background</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#162127;"></div>
+          <div class="color-info">
+            <div class="color-name">Dark Jungle Green</div>
+            <div class="color-hex">#162127</div>
+            <div class="color-token">cellar-surface</div>
+            <div class="color-role">Cards &amp; inputs</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#3A3534;"></div>
+          <div class="color-info">
+            <div class="color-name">Jet</div>
+            <div class="color-hex">#3A3534</div>
+            <div class="color-token">cellar-card</div>
+            <div class="color-role">Elevated cards</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#2A3A42; border: 1px solid #e0dbd4;"></div>
+          <div class="color-info">
+            <div class="color-name">Teal Shadow</div>
+            <div class="color-hex">#2A3A42</div>
+            <div class="color-token">cellar-border</div>
+            <div class="color-role">Borders &amp; dividers</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#CF9D7B;"></div>
+          <div class="color-info">
+            <div class="color-name">Antique Brass</div>
+            <div class="color-hex">#CF9D7B</div>
+            <div class="color-token">cellar-amber</div>
+            <div class="color-role">Primary / headings / CTA</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#7A8E94;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate Mist</div>
+            <div class="color-hex">#7A8E94</div>
+            <div class="color-token">cellar-muted</div>
+            <div class="color-role">Secondary text &amp; icons</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#52D48A;"></div>
+          <div class="color-info">
+            <div class="color-name">Spearmint</div>
+            <div class="color-hex">#52D48A</div>
+            <div class="color-token">cellar-green</div>
+            <div class="color-role">Success &amp; positive scores</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#F07060;"></div>
+          <div class="color-info">
+            <div class="color-name">Ember</div>
+            <div class="color-hex">#F07060</div>
+            <div class="color-token">cellar-red</div>
+            <div class="color-role">Errors &amp; destructive actions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="section">
+      <div class="section-label">Typography</div>
+      <div class="type-grid">
+        <div class="type-card">
+          <div class="type-specimen-display" style="font-family: Georgia, serif; letter-spacing: 0.04em; color: #CF9D7B;">The Cellar</div>
+          <div class="type-meta">
+            <div class="type-name">Battlesbridge</div>
+            <div class="type-detail">Custom display typeface<br/>Local font — wordmark &amp; hero moments only<br/>Weight: Regular</div>
+          </div>
+        </div>
+        <div class="type-card">
+          <div class="type-specimen-serif">Pour Notes<br/><span style="font-weight:300;">from the cellar</span></div>
+          <div class="type-meta">
+            <div class="type-name">Cormorant Garamond</div>
+            <div class="type-detail">Serif — headings, section titles, scores<br/>Weights: 300 · 400 · 600 · 700</div>
+            <div class="type-scale">
+              <div class="type-scale-item"><span>Display</span><span>32–40px / 700</span></div>
+              <div class="type-scale-item"><span>Heading</span><span>20–28px / 600</span></div>
+              <div class="type-scale-item"><span>Subhead</span><span>16–18px / 400</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="type-card">
+          <div class="type-specimen-sans">Tasting notes: hints of vanilla and dried fruit on the nose, warm oak on the palate, long finish with a touch of spice.</div>
+          <div class="type-meta">
+            <div class="type-name">Inter</div>
+            <div class="type-detail">Sans-serif — all body copy, UI labels, inputs<br/>Weights: 300 · 400 · 500 · 600</div>
+            <div class="type-scale">
+              <div class="type-scale-item"><span>Body</span><span>14px / 400</span></div>
+              <div class="type-scale-item"><span>Label</span><span>12px / 500</span></div>
+              <div class="type-scale-item"><span>Caption</span><span>10–11px / 500–600</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UI in context + Tone side by side -->
+    <div class="two-col" style="margin-bottom: 56px;">
+
+      <!-- UI Samples -->
+      <div>
+        <div class="section-label">UI in Context</div>
+        <div class="usage-grid" style="grid-template-columns: 1fr; gap: 12px;">
+          <div class="usage-card">
+            <div class="usage-label">Whiskey Card</div>
+            <div class="mock-card">
+              <div class="mock-card-top">
+                <span class="mock-pill">Bourbon</span>
+                <span class="mock-score">4.2</span>
+              </div>
+              <div class="mock-name">Blanton's Original</div>
+              <div class="mock-distillery">Buffalo Trace Distillery · $$</div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-top">
+                <span class="mock-pill">Scotch</span>
+                <span class="mock-score">3.8</span>
+              </div>
+              <div class="mock-name">Glenfiddich 12</div>
+              <div class="mock-distillery">William Grant &amp; Sons · $$</div>
+            </div>
+          </div>
+          <div class="usage-card">
+            <div class="usage-label">Form &amp; Buttons</div>
+            <div class="mock-heading">Log a Pour</div>
+            <div class="mock-subtext">How would you rate this whiskey?</div>
+            <div class="mock-input">Tasting notes…</div>
+            <div class="mock-input focused">Oak · Vanilla · Dried fruit</div>
+            <div class="mock-btn">Save Pour</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice & Tone -->
+      <div>
+        <div class="section-label">Voice &amp; Tone</div>
+        <div class="tone-grid" style="grid-template-columns: 1fr; gap: 12px;">
+          <div class="tone-card">
+            <div class="tone-emoji">🥃</div>
+            <div class="tone-name">Knowledgeable, not snobbish</div>
+            <div class="tone-do">✓ "A solid everyday dram" / "Worth hunting down"</div>
+            <div class="tone-dont">✗ "For the discerning palate only"</div>
+          </div>
+          <div class="tone-card">
+            <div class="tone-emoji">📖</div>
+            <div class="tone-name">Concise &amp; descriptive</div>
+            <div class="tone-do">✓ Short, evocative copy — let the whiskey speak</div>
+            <div class="tone-dont">✗ Long explanations, filler words, marketing fluff</div>
+          </div>
+          <div class="tone-card">
+            <div class="tone-emoji">🤝</div>
+            <div class="tone-name">Community first</div>
+            <div class="tone-do">✓ "Your friends are pouring this" / "New in your area"</div>
+            <div class="tone-dont">✗ Aggressive CTAs, pushy upsells, urgency tricks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Border Radius Tokens -->
+    <div class="section">
+      <div class="section-label">Shape &amp; Radius</div>
+      <div class="token-grid">
+        <div class="token-card">
+          <div class="radius-demo" style="border-radius: 8px;"></div>
+          <div class="token-label">rounded-lg</div>
+          <div class="token-value">8px — tags, pills</div>
+        </div>
+        <div class="token-card">
+          <div class="radius-demo" style="border-radius: 12px;"></div>
+          <div class="token-label">rounded-xl</div>
+          <div class="token-value">12px — buttons, inputs</div>
+        </div>
+        <div class="token-card">
+          <div class="radius-demo" style="border-radius: 16px;"></div>
+          <div class="token-label">rounded-2xl</div>
+          <div class="token-value">16px — cards, modals</div>
+        </div>
+        <div class="token-card">
+          <div class="radius-demo" style="border-radius: 100px;"></div>
+          <div class="token-label">rounded-full</div>
+          <div class="token-value">100px — avatars, type pills</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-left">The Cellar · Brand Guide v1.0 · Confidential</div>
+      <div class="footer-right">Colors, type, and tokens reflect production app as of March 2026</div>
+    </div>
+
+  </div>
+</body>
+</html>

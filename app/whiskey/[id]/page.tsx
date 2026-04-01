@@ -201,6 +201,17 @@ function WhiskeyDetailPage() {
 
       {/* Header card */}
       <div className="card p-5 mb-4">
+        {/* Bottle image — full width banner when available */}
+        {whiskey.image_url && (
+          <div className="flex justify-center mb-4 -mt-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={whiskey.image_url}
+              alt={whiskey.name}
+              className="h-48 w-auto object-contain"
+            />
+          </div>
+        )}
         <div className="flex items-start gap-4">
           <div className="shrink-0 flex flex-col items-center gap-1">
             <ScoreRing score={avgMaster} size={72} />

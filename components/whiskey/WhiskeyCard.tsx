@@ -27,12 +27,27 @@ export default function WhiskeyCard({
   return (
     <Link href={`/whiskey/${whiskey.id}`} className="card block p-4 active:scale-[0.98] transition-transform">
       <div className="flex items-start gap-3">
+        {/* Left: bottle image when available, otherwise score ring */}
         <div className="shrink-0 pt-1 flex flex-col items-center gap-0.5">
-          <ScoreRing score={communityScore} size={56} strokeWidth={4} />
-          {scoreLabel && <p className="text-[9px] text-cellar-muted leading-none">{scoreLabel}</p>}
+          {whiskey.image_url ? (
+            <div className="w-14 h-14 rounded-lg bg-cellar-surface flex items-center justify-center overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={whiskey.image_url} alt={whiskey.name} className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <>
+              <ScoreRing score={communityScore} size={56} strokeWidth={4} />
+              {scoreLabel && <p className="text-[9px] text-cellar-muted leading-none">{scoreLabel}</p>}
+            </>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-serif text-cellar-cream font-semibold text-base leading-tight truncate">{whiskey.name}</h3>
+          <div className="flex items-start justify-between gap-1">
+            <h3 className="font-serif text-cellar-cream font-semibold text-base leading-tight truncate">{whiskey.name}</h3>
+            {whiskey.image_url && communityScore > 0 && (
+              <span className="text-cellar-amber font-semibold text-sm shrink-0">{communityScore.toFixed(1)}</span>
+            )}
+          </div>
           <p className="text-cellar-muted text-xs mt-0.5 truncate">{whiskey.distillery}</p>
           <div className="flex flex-wrap gap-1.5 mt-2">
             <TagPill label={whiskey.type} variant="type" />

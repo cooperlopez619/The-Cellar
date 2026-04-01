@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a1a; display: flex; flex-direction: column; gap: 40px; padding: 40px; align-items: center; }
+
+    .post {
+      width: 1080px;
+      height: 1350px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* ── shared ── */
+    .handle {
+      font-family: 'Inter', sans-serif;
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(207,157,123,0.55);
+    }
+
+    /* ════════════════════════════════════════════
+       POST 1 — Brand intro
+    ════════════════════════════════════════════ */
+    #post1 {
+      background: #0C1519;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 90px 80px;
+    }
+
+    /* Noise texture overlay */
+    #post1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* Radial amber glow */
+    #post1::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -58%);
+      width: 700px; height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(207,157,123,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .p1-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #7A8E94;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .p1-logo {
+      position: relative;
+      z-index: 1;
+      width: 560px;
+      height: 560px;
+      object-fit: contain;
+      mix-blend-mode: screen;
+      margin: -20px 0 -20px;
+    }
+
+    .p1-divider {
+      width: 60px;
+      height: 1px;
+      background: rgba(207,157,123,0.4);
+      margin: 32px auto;
+      position: relative;
+      z-index: 1;
+    }
+    .p1-divider::before, .p1-divider::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(207,157,123,0.5);
+    }
+    .p1-divider::before { left: -10px; }
+    .p1-divider::after  { right: -10px; }
+
+    .p1-tagline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 52px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(207,157,123,0.75);
+      text-align: center;
+      line-height: 1.35;
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+
+    .p1-bottom {
+      position: absolute;
+      bottom: 70px;
+      left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 80px;
+      z-index: 1;
+    }
+
+    .p1-pills {
+      display: flex;
+      gap: 14px;
+    }
+    .p1-pill {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: #7A8E94;
+      border: 1px solid rgba(122,142,148,0.25);
+      padding: 8px 22px;
+      border-radius: 100px;
+    }
+
+    /* ════════════════════════════════════════════
+       POST 2 — Log a Pour
+    ════════════════════════════════════════════ */
+    #post2 {
+      background: #0C1519;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 90px 80px;
+      position: relative;
+    }
+
+    #post2::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle at bottom right, rgba(207,157,123,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .p2-header {
+      position: relative; z-index: 1;
+    }
+    .p2-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #7A8E94;
+      margin-bottom: 20px;
+    }
+    .p2-headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 88px;
+      font-weight: 600;
+      color: #CF9D7B;
+      line-height: 1.0;
+    }
+    .p2-headline em {
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(207,157,123,0.65);
+    }
+
+    /* Mock pour card */
+    .pour-card {
+      background: #162127;
+      border: 1px solid #2A3A42;
+      border-radius: 28px;
+      padding: 44px 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pour-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .pour-whiskey-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 46px;
+      font-weight: 600;
+      color: #CF9D7B;
+      line-height: 1.1;
+    }
+    .pour-distillery {
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      color: #7A8E94;
+      margin-top: 6px;
+    }
+    .pour-score-ring {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .ring-value {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 52px;
+      font-weight: 700;
+      color: #CF9D7B;
+      line-height: 1;
+    }
+    .ring-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      color: #7A8E94;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .pour-bars { display: flex; flex-direction: column; gap: 16px; }
+    .pour-bar-row { display: flex; align-items: center; gap: 16px; }
+    .pour-bar-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      color: #7A8E94;
+      width: 160px;
+      flex-shrink: 0;
+    }
+    .pour-bar-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(42,58,66,0.8);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .pour-bar-fill {
+      height: 100%;
+      background: #CF9D7B;
+      border-radius: 100px;
+    }
+
+    .pour-notes {
+      margin-top: 28px;
+      padding-top: 28px;
+      border-top: 1px solid rgba(42,58,66,0.8);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 30px;
+      font-weight: 300;
+      color: rgba(207,157,123,0.6);
+      line-height: 1.4;
+    }
+
+    .p2-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative; z-index: 1;
+    }
+    .p2-cta {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 30px;
+      font-style: italic;
+      color: rgba(207,157,123,0.5);
+    }
+
+    /* ════════════════════════════════════════════
+       POST 3 — Community
+    ════════════════════════════════════════════ */
+    #post3 {
+      background: #0C1519;
+      display: flex;
+      flex-direction: column;
+      padding: 90px 80px;
+      position: relative;
+    }
+
+    #post3::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: -100px;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(207,157,123,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .p3-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #7A8E94;
+      margin-bottom: 20px;
+      position: relative; z-index: 1;
+    }
+
+    .p3-headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 90px;
+      font-weight: 600;
+      color: #CF9D7B;
+      line-height: 1.0;
+      margin-bottom: 8px;
+      position: relative; z-index: 1;
+    }
+    .p3-headline em {
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(207,157,123,0.6);
+    }
+
+    .p3-sub {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 34px;
+      font-weight: 300;
+      color: rgba(207,157,123,0.5);
+      margin-bottom: 64px;
+      position: relative; z-index: 1;
+    }
+
+    /* Mock leaderboard */
+    .leaderboard {
+      background: #162127;
+      border: 1px solid #2A3A42;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative; z-index: 1;
+      margin-bottom: 28px;
+    }
+    .lb-header {
+      padding: 28px 40px 20px;
+      border-bottom: 1px solid #2A3A42;
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7A8E94;
+    }
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 22px 40px;
+      border-bottom: 1px solid rgba(42,58,66,0.5);
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row.me { background: rgba(207,157,123,0.05); }
+
+    .lb-rank {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px;
+      font-weight: 700;
+      width: 44px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .lb-avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .lb-detail {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      color: #7A8E94;
+    }
+    .lb-score {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 30px;
+      font-weight: 600;
+      color: #CF9D7B;
+      text-align: right;
+    }
+    .lb-score-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: #7A8E94;
+      text-align: right;
+    }
+
+    .p3-features {
+      display: flex;
+      gap: 16px;
+      margin-bottom: auto;
+      position: relative; z-index: 1;
+    }
+    .p3-feature {
+      flex: 1;
+      background: #162127;
+      border: 1px solid #2A3A42;
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .p3-feature-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .p3-feature-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: rgba(207,157,123,0.8);
+    }
+
+    .p3-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative; z-index: 1;
+      margin-top: 36px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ POST 1: Brand Intro ══════════════════════════════════════════════ -->
+  <div class="post" id="post1">
+    <p class="p1-eyebrow">Introducing</p>
+
+    <img src="./public/logo.png" class="p1-logo" alt="The Cellar" />
+
+    <div class="p1-divider"></div>
+
+    <p class="p1-tagline">Your personal whiskey journal &amp; discovery app</p>
+
+    <div class="p1-bottom">
+      <div class="p1-pills">
+        <span class="p1-pill">Log Pours</span>
+        <span class="p1-pill">Rate &amp; Review</span>
+        <span class="p1-pill">Discover</span>
+      </div>
+      <span class="handle">@thecellarapp</span>
+    </div>
+  </div>
+
+  <!-- ══ POST 2: Log a Pour ═══════════════════════════════════════════════ -->
+  <div class="post" id="post2">
+    <div class="p2-header">
+      <p class="p2-eyebrow">Every pour</p>
+      <h2 class="p2-headline">Remembered<br/><em>forever.</em></h2>
+    </div>
+
+    <div class="pour-card">
+      <div class="pour-card-top">
+        <div>
+          <div class="pour-whiskey-name">Blanton's<br/>Original</div>
+          <div class="pour-distillery">Buffalo Trace · Bourbon · $$</div>
+        </div>
+        <div class="pour-score-ring">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(42,58,66,0.8)" stroke-width="6"/>
+            <circle cx="45" cy="45" r="38" fill="none" stroke="#CF9D7B" stroke-width="6"
+              stroke-dasharray="239" stroke-dashoffset="48"
+              stroke-linecap="round" transform="rotate(-90 45 45)"/>
+            <text x="45" y="50" text-anchor="middle" font-family="Cormorant Garamond, serif"
+              font-size="26" font-weight="700" fill="#CF9D7B">4.2</text>
+          </svg>
+          <span class="ring-label">Score</span>
+        </div>
+      </div>
+
+      <div class="pour-bars">
+        <div class="pour-bar-row">
+          <span class="pour-bar-label">Nose</span>
+          <div class="pour-bar-track"><div class="pour-bar-fill" style="width:84%"></div></div>
+        </div>
+        <div class="pour-bar-row">
+          <span class="pour-bar-label">Palate</span>
+          <div class="pour-bar-track"><div class="pour-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="pour-bar-row">
+          <span class="pour-bar-label">Finish</span>
+          <div class="pour-bar-track"><div class="pour-bar-fill" style="width:78%"></div></div>
+        </div>
+        <div class="pour-bar-row">
+          <span class="pour-bar-label">Oak &amp; Vanilla</span>
+          <div class="pour-bar-track"><div class="pour-bar-fill" style="width:88%"></div></div>
+        </div>
+        <div class="pour-bar-row">
+          <span class="pour-bar-label">Sweetness</span>
+          <div class="pour-bar-track"><div class="pour-bar-fill" style="width:72%"></div></div>
+        </div>
+      </div>
+
+      <div class="pour-notes">
+        "Warm caramel on the nose, hints of orange peel. Long, oaky finish."
+      </div>
+    </div>
+
+    <div class="p2-bottom">
+      <p class="p2-cta">Log your next pour ↓</p>
+      <span class="handle">@thecellarapp</span>
+    </div>
+  </div>
+
+  <!-- ══ POST 3: Community ════════════════════════════════════════════════ -->
+  <div class="post" id="post3">
+    <p class="p3-eyebrow">Community</p>
+    <h2 class="p3-headline">Drink well,<br/><em>together.</em></h2>
+    <p class="p3-sub">Find your drinking buddies.</p>
+
+    <div class="leaderboard">
+      <div class="lb-header">Friends Leaderboard</div>
+
+      <div class="lb-row">
+        <span class="lb-rank" style="color:#F4C842;">🥇</span>
+        <div class="lb-avatar" style="background:rgba(207,157,123,0.15); color:#CF9D7B;">JD</div>
+        <div class="lb-info">
+          <div class="lb-name" style="color:#CF9D7B;">Jake D.</div>
+          <div class="lb-detail">47 pours · Bourbon</div>
+        </div>
+        <div>
+          <div class="lb-score">4.4</div>
+          <div class="lb-score-label">avg score</div>
+        </div>
+      </div>
+
+      <div class="lb-row">
+        <span class="lb-rank" style="color:#C0C0C0;">🥈</span>
+        <div class="lb-avatar" style="background:rgba(82,212,138,0.15); color:#52D48A;">SR</div>
+        <div class="lb-info">
+          <div class="lb-name" style="color:#F0D9B5;">Sarah R.</div>
+          <div class="lb-detail">39 pours · Scotch</div>
+        </div>
+        <div>
+          <div class="lb-score">4.1</div>
+          <div class="lb-score-label">avg score</div>
+        </div>
+      </div>
+
+      <div class="lb-row me">
+        <span class="lb-rank" style="color:#CD7F32;">🥉</span>
+        <div class="lb-avatar" style="background:rgba(240,112,96,0.15); color:#F07060;">You</div>
+        <div class="lb-info">
+          <div class="lb-name" style="color:#CF9D7B;">You</div>
+          <div class="lb-detail">31 pours · Rye</div>
+        </div>
+        <div>
+          <div class="lb-score">3.9</div>
+          <div class="lb-score-label">avg score</div>
+        </div>
+      </div>
+
+      <div class="lb-row">
+        <span class="lb-rank" style="color:#7A8E94; font-size:22px; font-family:Inter,sans-serif;">#4</span>
+        <div class="lb-avatar" style="background:rgba(122,142,148,0.15); color:#7A8E94;">MK</div>
+        <div class="lb-info">
+          <div class="lb-name" style="color:#F0D9B5;">Mike K.</div>
+          <div class="lb-detail">24 pours · Japanese</div>
+        </div>
+        <div>
+          <div class="lb-score">3.8</div>
+          <div class="lb-score-label">avg score</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p3-features">
+      <div class="p3-feature">
+        <div class="p3-feature-icon">🥃</div>
+        <div class="p3-feature-label">Log Pours</div>
+      </div>
+      <div class="p3-feature">
+        <div class="p3-feature-icon">⭐</div>
+        <div class="p3-feature-label">Rate &amp; Score</div>
+      </div>
+      <div class="p3-feature">
+        <div class="p3-feature-icon">🤝</div>
+        <div class="p3-feature-label">Find Friends</div>
+      </div>
+    </div>
+
+    <div class="p3-bottom">
+      <p style="font-family:'Cormorant Garamond',serif; font-style:italic; font-size:30px; color:rgba(207,157,123,0.5);">Who's topping your board?</p>
+      <span class="handle">@thecellarapp</span>
+    </div>
+  </div>
+
+</body>
+</html>

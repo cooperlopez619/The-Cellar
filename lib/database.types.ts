@@ -10,16 +10,23 @@ export interface Profile {
 }
 
 export interface Whiskey {
-  id:          string
-  name:        string
-  distillery:  string
-  type:        WhiskeyType
-  region:      string | null
-  abv:         number | null
-  price_tier:  PriceTier | null
-  is_custom:   boolean
-  created_by:  string | null
-  created_at:  string
+  id:           string
+  name:         string
+  distillery:   string
+  type:         WhiskeyType
+  region:       string | null
+  country:      string | null
+  abv:          number | null
+  price_tier:   PriceTier | null
+  image_url:    string | null
+  main_taste:   string | null
+  sub_taste:    string | null
+  mild_full:    number | null
+  smooth_spicy: number | null
+  fresh_warm:   number | null
+  is_custom:    boolean
+  created_by:   string | null
+  created_at:   string
 }
 
 export interface Pour {
