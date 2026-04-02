@@ -15,7 +15,7 @@ type Stats = Record<string, { avgScore: number; avgBFB: number }>
 // Module-level cache — survives navigation within the session.
 // Whiskeys and stats are cached (they rarely change); lists are always refreshed.
 // Bump CACHE_VERSION to force a fresh fetch after catalog/image updates.
-const CACHE_VERSION = 2
+const CACHE_VERSION = 3
 let _catalogCache: {
   uid: string
   version: number

@@ -22,7 +22,7 @@ const SQLITE_PATH = '/tmp/cellar-data/data/whiskey.sqlite'
 const IMAGES_DIR  = '/tmp/cellar-data/data/images'
 const BATCH_SIZE  = 100
 const IMG_CONCURRENCY = 10  // parallel image uploads at a time
-const SKIP_IMAGE_UPLOAD = true  // images already uploaded — set false to re-upload
+const SKIP_IMAGE_UPLOAD = true  // images already in storage
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -111,7 +111,7 @@ const db = new Database(SQLITE_PATH, { readonly: true })
 const rows = db.prepare(`
   SELECT
     doc_id,
-    thumbnail                                       AS thumbnail_id,
+    doc_id                                          AS thumbnail_id,
     json_extract(search_json, '$.query')            AS full_name,
     json_extract(detail_json, '$.distillery_name')  AS distillery,
     json_extract(detail_json, '$.country')          AS country,
@@ -144,9 +144,16 @@ if (!SKIP_IMAGE_UPLOAD) {
   console.log('\n📸 Skipping image upload (already done)')
 }
 
-// Build image URL directly from known storage pattern — avoids any map lookup issues
+// Build set of locally available image IDs so we only set URLs we know exist
+import { readdirSync } from 'fs'
+const localImageIds = new Set(
+  readdirSync('/tmp/cellar-data/data/images').map(f => f.replace('.webp', ''))
+)
+console.log(`Local images available: ${localImageIds.size}`)
+
+// Build image URL only if the file exists locally (was uploaded to storage)
 function imageUrl(thumbnailId) {
-  if (!thumbnailId) return null
+  if (!thumbnailId || !localImageIds.has(String(thumbnailId))) return null
   return `${SUPABASE_URL}/storage/v1/object/public/images/whiskeys/${thumbnailId}.webp`
 }
 
